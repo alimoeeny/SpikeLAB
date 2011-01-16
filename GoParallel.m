@@ -1,0 +1,2 @@
+pctconfig('hostname', 'satie')
+matlabpool
