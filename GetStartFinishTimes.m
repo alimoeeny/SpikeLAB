@@ -10,6 +10,9 @@ switch filetype
     case 'ABD'
         StartTime = 500;
         FinishTime = 20000;
+    case {'TWO'}
+        StartTime = 500;
+        FinishTime = 20000;
     otherwise 
         StartTime = 0;
         FinishTime = 0;
