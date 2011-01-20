@@ -4,14 +4,14 @@ clc;
 ShowSingleCellSDFs = 0; % 0 or 1
 
 % % ABD
-% load('/Users/ali/DropBox/Projects/BCode/AllABDNeurons.mat');
+% load('../AllABDNeurons.mat');
 % AllNeurons = AllABDNeurons;
 % clear AllABDNeurons;
 % FileType = 'ABD';
 % StimulusType = 'cylinder';
 
 % % % DID
-% load('/Users/ali/DropBox/Projects/BCode/AllDIDNeurons.mat');
+% load('../AllDIDNeurons.mat');
 % AllNeurons = AllDIDNeurons;
 % clear AllDIDNeurons;
 % FileType = 'DID';
@@ -19,36 +19,36 @@ ShowSingleCellSDFs = 0; % 0 or 1
 
 
 % % % TWO
-% load('/Users/ali/DropBox/Projects/BCode/AllTWONeurons.mat');
-% AllNeurons = AllTWONeurons;
-% clear AllTWONeurons;
-% FileType = 'TWO';
-% StimulusType = 'cylinder';
+load('../AllTWONeurons.mat');
+AllNeurons = AllTWONeurons;
+clear AllTWONeurons;
+FileType = 'TWO';
+StimulusType = 'cylinder';
 
 % % BDID
-load('/Users/ali/DropBox/Projects/BCode/AllBDIDNeuronsALL.mat');
-AllNeurons = AllBDIDNeuronsALL;
-clear AllBDIDNeuronsALL;
-FileType = 'BDID';
-StimulusType = 'cylinder';
+% load('../AllBDIDNeuronsALL.mat');
+% AllNeurons = AllBDIDNeuronsALL;
+% clear AllBDIDNeuronsALL;
+% FileType = 'BDID';
+% StimulusType = 'cylinder';
 % AllNeurons = AllNeurons(1:37); 
 % %disp('= = = = = =  JUST LOOKING AT Adrian s  Cells = = = = = =');
 %  AllNeurons = AllNeurons(38:51); 
 %  disp('= = = = = =  Ignoring  Adrian s  Cells = = = = = =');
 
 % % % DIDB
-% load('/Users/ali/DropBox/Projects/BCode/AllDIDBNeurons.mat');
+% load('../AllDIDBNeurons.mat');
 % AllNeurons = AllDIDBNeurons;
 % clear AllDIDBNeurons;
 % FileType = 'DIDB';
 % StimulusType = 'cylinder';
 
 % % DRID
-% load('/Users/ali/DropBox/Projects/BCode/AllDRIDNeurons.mat');
+% load('../AllDRIDNeurons.mat');
 % FileType = 'DRID';
 % AllNeurons = AllDRIDNeurons;
 % % SRID
-% load('/Users/ali/DropBox/Projects/BCode/AllSRIDNeurons.mat');
+% load('../AllSRIDNeurons.mat');
 % FileType = 'SRID';
 % AllNeurons = AllSRIDNeurons;
 % clear AllDRIDNeurons AllSRIDNeurons;
@@ -66,7 +66,7 @@ TI=[];
 % THIS IS THE SELETION OF DRID dx tunied experiemtns
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
-parfor iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
+for iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
@@ -77,18 +77,18 @@ parfor iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
             %if (abs(TI(iN))>0.1)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
-                [p, c, eb, jnk1, jnk2] = PlotPSTHIdisp(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
                 %[c, eb] = PlotISISdf(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, 1);
                 slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx'); 
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
             %end
         case 'BDID'
-            [p, c, eb] = PlotPSTHIdisp(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
             slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd'); 
             %disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
         case 'TWO'
-            [p, c, eb] = PlotPSTHIdisp(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
             %[p, c, eb] = PlotPSTHTWO(NeuronNumber, FileType, StimulusType, BinSize, 0);
             %TI(iN) = TuningIndex(NeuronNumber, ClusterName, StimulusType, FileType, 'dx');

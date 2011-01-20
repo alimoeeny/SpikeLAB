@@ -20,22 +20,22 @@ FinishTime = 0;
 % FinishTime = 20000;
 
 % % DID
-load /Users/ali/DropBox/Projects/BCode/AllDIDNeurons.mat
-AllNeurons = AllDIDNeurons;
-clear AllDIDNeurons
-FileType = 'DID';
-StimulusType = 'cylinder';
-StartTime  = 10000; %10000; % 6500; 
-FinishTime = 20000;
+% load /Users/ali/DropBox/Projects/BCode/AllDIDNeurons.mat
+% AllNeurons = AllDIDNeurons;
+% clear AllDIDNeurons
+% FileType = 'DID';
+% StimulusType = 'cylinder';
+% StartTime  = 10000; %10000; % 6500; 
+% FinishTime = 20000;
 
 % % TWO
-% load('/Users/ali/DropBox/Projects/BCode/AllTWONeurons.mat');
-% AllNeurons = AllTWONeurons;
-% clear AllTWONeurons;
-% FileType = 'TWO';
-% StimulusType = 'cylinder';
-% StartTime  = 500; %10000; %5500; 
-% FinishTime = 20000;
+load('../AllTWONeurons.mat');
+AllNeurons = AllTWONeurons;
+clear AllTWONeurons;
+FileType = 'TWO';
+StimulusType = 'cylinder';
+StartTime  = 500; %10000; %5500; 
+FinishTime = 20000;
 
 % % DPI
 % load('/Users/ali/DropBox/Projects/BCode/AllPursuitNeurons.mat');
@@ -57,6 +57,7 @@ FinishTime = 20000;
 % FinishTime = 20000;
 % 
 
+AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
 
 %par
 for iN= [1 :length(AllNeurons)], 
@@ -422,12 +423,12 @@ if(strcmpi(FileType, 'DPi'))
     end
     
     figure, clf,
-    brucescatter(TI, dps(:,4)') %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+    clickscatter(TI, dps(:,4)') %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
     refline(0, 0); reflinexy(0,100);
 
     % d prime shift
     figure, clf,
-    brucescatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))'); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+    clickscatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))'); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
     refline(0, 0); reflinexy(0,100);
     %  normalized d prime shift
     figure, clf,
@@ -437,18 +438,18 @@ if(strcmpi(FileType, 'DPi'))
 else
     if(strcmpi(FileType, 'BDID'))
         figure(1123), clf, hist(IdBiasROC2);
-        figure(1145), clf, brucescatter(TI, IdBiasROC2, 1, 7, fileNames); refline(0, 0.5);
+        figure(1145), clf, clickscatter(TI, IdBiasROC2, 1, 7, fileNames); refline(0, 0.5);
     else
-    figure(17), clf, brucescatter(TI, IdBiasROC1, pDs, 7, fileNames) %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+    figure(17), clf, clickscatter(TI, IdBiasROC1, pDs, 7, fileNames) %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
     refline(0, 0.5);
     %figure, scatter(abs(TI), IdBiasROC1, [], reshape(([IdColor{:}]), 3,length(IdBiasROC1))', 'filled');
     if (strcmp(FileType, 'TWO'))
-        figure(19), clf, brucescatter(FlipROC, IdBiasROC1, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        figure(19), clf, clickscatter(FlipROC, IdBiasROC1, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
         refline(0, 0.5);
     end
 
     sum(BiaEff>0) / length(BiaEff) % percentage inclusion for Correctly biased thing
-    figure(23), clf, brucescatter(TI(BiaEff>0), IdBiasROC1(BiaEff>0),1, 7, fileNames); %, DotSizes(BiaEff>0), reshape(([IdColor{BiaEff>0}]), 3, sum(BiaEff>0))', 'filled');
+    figure(23), clf, clickscatter(TI(BiaEff>0), IdBiasROC1(BiaEff>0),1, 7, fileNames); %, DotSizes(BiaEff>0), reshape(([IdColor{BiaEff>0}]), 3, sum(BiaEff>0))', 'filled');
     refline(0, 0.5);
     reflinexy(0,1);
     end
