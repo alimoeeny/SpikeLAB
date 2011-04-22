@@ -1,5 +1,5 @@
 function [pd] = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, varargin)
-% 1: positive, 2: negative , 3 = null direction, -1 when file does not exist
+% 1: positive, 2: negative , -1 when file does not exist
 % arguments Monkey name,  neuron number, clustername, fiiletype, Include zero or not,
 % 'forced' (forced to use the filetype given not to use ABD if available or ...)
 
@@ -71,7 +71,12 @@ else if ~isempty(strfind(FileType, 'RID'))
     end
 end
 
-[StartTime, FinishTime] = GetStartFinishTimes(FileType);
+if strcmp(FileType, 'DID') || strcmp(FileType, 'BDID')
+    StartTime = 500;
+    FinishTime = 5500;
+else
+    [StartTime, FinishTime] = GetStartFinishTimes(FileType);
+end
 
 SpikeCounts = zeros(length([Expt.Trials]),1);
 for tr = 1: length([Expt.Trials]), 

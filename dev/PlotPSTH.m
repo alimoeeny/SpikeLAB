@@ -1,4 +1,4 @@
-function [PSTH, conditions, eb, varargout]= PlotPSTHIdisp(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, Cumulative, PlotIt)
+function [PSTH, conditions, eb, varargout]= PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, Cumulative, PlotIt)
 % Plots the PSTH for different conditions in the Experiment
 varargout{1} = [];
 varargout{2} = [];
@@ -57,30 +57,54 @@ for cc = 1: size(conditions,1)
     if sum(conditions(cc,:))>0
         eb(cc,:) = mean(PSTH(conditions(cc,:),:),1);
         se(cc,:) = std(PSTH(conditions(cc,:),:),[],1) / sqrt(sum(conditions(cc,:)));
-    else
+    elseif cc > 1
         eb(cc,:) = 0;
         se(cc,:) = 0;
     end
 end
 
 if strcmpi(FileType, 'DID')
-    cuttoff = median(mean(PSTH(conditions(3,:), 250: 750),2));
-    eDb(1,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, 250: 750),2) > cuttoff), :),1);
-    eDb(2,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, 250: 750),2) <=cuttoff), :),1);
+    startPointer = 750; %250;
+    endPointer = 1500; %750;
+    cuttoff = median(mean(PSTH(conditions(3,:), startPointer: endPointer),2));
+    eDb(1,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
+    eDb(2,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
     varargout{2} = eDb;
     eb(size(eb,1)+1,:) = eDb(1,:);
     eb(size(eb,1)+1,:) = eDb(2,:);
-    conditions(size(conditions,1)+1,:)  = (conditions(3,:)' & mean(PSTH(:, 250: 750),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(3,:)' & mean(PSTH(:, 250: 750),2) <=cuttoff);
+    conditions(size(conditions,1)+1,:)  = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
+    conditions(size(conditions,1)+1,:) = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
 
-    cuttoff = median(mean(PSTH(conditions(4,:), 250: 750),2));
-    eDb(3,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, 250: 750),2) > cuttoff), :),1);
-    eDb(4,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, 250: 750),2) <=cuttoff), :),1);
+    cuttoff = median(mean(PSTH(conditions(4,:), startPointer: endPointer),2));
+    eDb(3,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
+    eDb(4,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
     varargout{2} = eDb;
-    eb(size(eb,1)+1,:) = eDb(1,:);
-    eb(size(eb,1)+1,:) = eDb(2,:);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, 250: 750),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, 250: 750),2) <=cuttoff);
+    eb(size(eb,1)+1,:) = eDb(3,:);
+    eb(size(eb,1)+1,:) = eDb(4,:);
+    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
+    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
+
+% ---------
+    startPointer = 750;
+    endPointer = 1500;
+    cuttoff = median(mean(PSTH(conditions(3,:), startPointer: endPointer),2));
+    eDb(5,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
+    eDb(6,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
+    varargout{2} = eDb;
+    eb(size(eb,1)+1,:) = eDb(5,:);
+    eb(size(eb,1)+1,:) = eDb(6,:);
+    conditions(size(conditions,1)+1,:)  = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
+    conditions(size(conditions,1)+1,:) = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
+
+    cuttoff = median(mean(PSTH(conditions(4,:), startPointer: endPointer),2));
+    eDb(7,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
+    eDb(8,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
+    varargout{2} = eDb;
+    eb(size(eb,1)+1,:) = eDb(7,:);
+    eb(size(eb,1)+1,:) = eDb(8,:);
+    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
+    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
+
 end
 
 
@@ -100,17 +124,38 @@ switch FileType
         %roc1 = ROCAUC(PSTH(conditions(3,:),50:550),PSTH(conditions(5,:),50:550));
         %roc2 = ROCAUC(PSTH(conditions(6,:),50:550),PSTH(conditions(4,:),50:550));
         %disp(['First 500ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
-        roc1 = ROCAUC(PSTH(conditions(3,:),300:600),PSTH(conditions(5,:),300:800));
-        roc2 = ROCAUC(PSTH(conditions(6,:),300:600),PSTH(conditions(4,:),300:800));
+        roc1 = ROCAUC(PSTH(conditions(3,:),300:800),PSTH(conditions(5,:),300:800));
+        roc2 = ROCAUC(PSTH(conditions(6,:),300:800),PSTH(conditions(4,:),300:800));
         disp(['First 100-600ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
-        a = zscore(mean(PSTH(conditions( 9,:)|conditions(10,:),1100:2100),2));
-        b = zscore(mean(PSTH(conditions(11,:)|conditions(12,:),1100:2100),2));
+        a = zscore(mean(PSTH(conditions( 9,:)|conditions(10,:), 200:2100),2)); %1100:2100),2));
+        b = zscore(mean(PSTH(conditions(11,:)|conditions(12,:), 200:2100),2)); %1100:2100),2));
         aa = [a(1 : sum(conditions(9,:))) ; b(1 : sum(conditions(11,:)))];
         bb = [a(sum(conditions(9,:))+1 : sum(conditions(9,:))+sum(conditions(10,:))) ; b(sum(conditions(11,:))+1 : sum(conditions(11,:))+sum(conditions(12,:)))];
         roc3 = ROCAUC(aa, bb);
+        %main effect ROC 
+        roc4 = ROCAUC(PSTH(conditions(1,:),1200:2200),PSTH(conditions(2,:),1200:2200));
+        roc5 = ROCAUC(PSTH(conditions(1,:),1000:2000),PSTH(conditions(2,:),1000:2000));
+        %next to zero Stimulus AND choice
+        roc6 = ROCAUC(PSTH(conditions(13,:),300:2000),PSTH(conditions(14,:),300:2000));
+        % next to zero z scored
+        a = zscore(mean(PSTH(conditions( 16,:)|conditions(17,:), 200:2100),2)); %1100:2100),2));
+        b = zscore(mean(PSTH(conditions(18,:)|conditions(19,:), 200:2100),2)); %1100:2100),2));
+        aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
+        bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
+        roc7 = ROCAUC(aa, bb);
+        
+        
         varargout{1}(1) = roc1;
         varargout{1}(2) = roc2;
         varargout{1}(3) = roc3;
+        varargout{1}(4) = roc4;
+        varargout{1}(5) = roc5;
+        varargout{1}(6) = roc6;
+        varargout{1}(7) = roc7;
+    case 'BDID'
+        %main effect ROC 
+        roc4 = ROCAUC(PSTH(conditions(7,:),1200:2200),PSTH(conditions(8,:),1200:2200));
+        varargout{1}(4) = roc4;
 end
 
 if(PlotIt)

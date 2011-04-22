@@ -19,8 +19,8 @@ FinishTime = 0;
 % StartTime  = 10000;  %10000; % 6500;
 % FinishTime = 20000;
 
-% % DID
-% load /Users/ali/DropBox/Projects/BCode/AllDIDNeurons.mat
+% % % DID
+% load ../AllDIDNeurons.mat
 % AllNeurons = AllDIDNeurons;
 % clear AllDIDNeurons
 % FileType = 'DID';
@@ -29,26 +29,26 @@ FinishTime = 0;
 % FinishTime = 20000;
 
 % % TWO
-load('../AllTWONeurons.mat');
-AllNeurons = AllTWONeurons;
-clear AllTWONeurons;
-FileType = 'TWO';
-StimulusType = 'cylinder';
-StartTime  = 500; %10000; %5500; 
-FinishTime = 20000;
+% load('../AllTWONeurons.mat');
+% AllNeurons = AllTWONeurons;
+% clear AllTWONeurons;
+% FileType = 'TWO';
+% StimulusType = 'cylinder';
+% StartTime  = 500; %10000; %5500; 
+% FinishTime = 20000;
 
 % % DPI
-% load('/Users/ali/DropBox/Projects/BCode/AllPursuitNeurons.mat');
-% AllNeurons = AllPursuitNeurons;
-% clear AllPursuitNeurons;
-% FileType = 'DPI';
-% StimulusType = 'cylinder';
-% StartTime  = 500;% 10000; %500; %10000; 
-% FinishTime = 20000;
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
+StartTime  = 500;% 10000; %500; %10000; 
+FinishTime = 20000;
 
 
 % % % BDID
-% load('/Users/ali/DropBox/Projects/BCode/AllBDIDNeuronsALL.mat');
+% load('../AllBDIDNeuronsALL.mat');
 % AllNeurons = AllBDIDNeuronsALL;
 % clear AllBDIDNeurons;
 % FileType = 'BDID';
@@ -57,7 +57,9 @@ FinishTime = 20000;
 % FinishTime = 20000;
 % 
 
-AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+% AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
+% AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+% disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
 %par
 for iN= [1 :length(AllNeurons)], 
@@ -297,6 +299,15 @@ for iN= [1 :length(AllNeurons)],
         [rr, pp] = ROCAUCSignificance(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:))); 
         IdBiasROCSig(iN) = pp;
         ROCpairs1{iN} = {SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:))};
+        
+        Next2ZeroROC1(iN) = ROCAUC(SpikeCounts(conditions(13,:)), SpikeCounts(conditions(14,:)));
+        % next to zero z scored
+        a = zscore(SpikeCounts(conditions(16,:)|conditions(17,:)));
+        b = zscore(SpikeCounts(conditions(18,:)|conditions(19,:)));
+        aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
+        bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
+        Next2ZeroROCZScored(iN) = ROCAUC(aa, bb);
+        orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     end
     switch FileType
         case {'TWO', 'BDID'}
@@ -347,6 +358,30 @@ for iN= [1 :length(AllNeurons)],
                        if isnan(BiaEffFlip(iN))
                            debug = 1;
                        end
+            xo = Expt.Stimvals.xo;
+            yo = Expt.Stimvals.yo;
+            if (0<sum(NeuronNumber==[ 130 128 125 324 330]))
+                RFproximity(iN) = -1;
+                FxProximity(iN) = sqrt(xo^2 + yo^2); % - (szrf);
+                disp(['----------------------------------------', num2str([FxProximity(iN),xo, yo])]);
+            else
+                if (isfield(Expt.Trials,'backxo')) 
+                    bx = median([Expt.Trials(:).backxo]);
+                else
+                    bx = median([Expt.Stimvals.backxo]);
+                end
+                if (isfield(Expt.Trials,'backyo')) 
+                    by = median([Expt.Trials(:).backyo]);
+                else
+                    by = median([Expt.Stimvals.backyo]);
+                end
+                sz = median([Expt.Trials(:).sz]);
+                rf = RFFit(MonkeyName, NeuronNumber, ClusterName, 0);
+                szrf = rf(1) + sz;
+                RFproximity(iN) = sqrt((xo - bx )^2 + (yo - by) ^2 ) - (szrf);
+                FxProximity(iN) = sqrt(xo^2 + yo^2); % - (szrf);
+                disp(['----------------------------------------', num2str([FxProximity(iN), xo, yo])]);
+            end
         else
             BiaEff(iN) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0) ...
                - 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
@@ -397,6 +432,32 @@ for iN= [1 :length(AllNeurons)],
     end
 end
 
+%% or
+
+bb = [0 45 90 135 ];
+for i = 1: length(orS), 
+    switch round(orS(i)) 
+        case {-90, 80, 110, 115}, orSm(i) = 90; 
+        case 180, orSm(i) = 0; 
+        case {-135, -160, 30}, orSm(i) = 45; 
+        case {-30, -45, 120}, orSm(i) = 135; 
+        otherwise orSm(i) = orS(i); 
+    end, 
+end
+g = zeros(length(orSm),1);
+for i = 1: length(bb), g(orSm==bb(i)) = i; end
+
+for i = 1:length(bb), m(i) = mean(IdBiasROC1(round(orSm) == round(bb(i)))); end
+for i = 1:length(bb), e(i) = std(IdBiasROC1(round(orSm) == round(bb(i)))); end
+figure(856), clf
+errorbar(bb, m, e)
+figure(678), scatter(orSm, IdBiasROC1, 'filled')
+figure(698), scatter(orSm, BiaEff, 'filled')
+
+[p,table,stats] = anova1(IdBiasROC1(abs(TI)>0.1), g(abs(TI)>0.1))
+[p,table,stats] = anova1(BiaEff(abs(TI)>0.1), g(abs(TI)>0.1))
+
+
 
 %% ROC distribution analysis  
 % is our ROCs come from a single distribution or two or more groups of neurons
@@ -411,48 +472,61 @@ if strcmp(FileType, 'TWO')
 end
 %% Graphics
 
-if(strcmpi(FileType, 'DPi'))
-    for i = 1: length(dprimes),
-        if(~isempty(dprimes{i}))
-            if(~isnan(dprimes{i}(1)))
-                for j = 1: length(dprimes{i})
-                    dps(i,j) = dprimes{i}(j);
+switch(FileType)
+    case 'DPi'
+        for i = 1: length(dprimes),
+            if(~isempty(dprimes{i}))
+                if(~isnan(dprimes{i}(1)))
+                    for j = 1: length(dprimes{i})
+                        dps(i,j) = dprimes{i}(j);
+                    end
                 end
             end
         end
-    end
-    
-    figure, clf,
-    clickscatter(TI, dps(:,4)') %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-    refline(0, 0); reflinexy(0,100);
 
-    % d prime shift
-    figure, clf,
-    clickscatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))'); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-    refline(0, 0); reflinexy(0,100);
-    %  normalized d prime shift
-    figure, clf,
-    scatter(TI, ((dps(:,8) - dps(:,12))./ (dps(:,8) + dps(:,12)))', DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-    refline(0, 0); reflinexy(0,100);
+        figure, clf,
+        clickscatter(TI, dps(:,4)') %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        refline(0, 0); reflinexy(0,100);
+
+        % d prime shift
+        figure, clf,
+        clickscatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))'); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        refline(0, 0); reflinexy(0,100);
+        %  normalized d prime shift
+        figure, clf,
+        scatter(TI, ((dps(:,8) - dps(:,12))./ (dps(:,8) + dps(:,12)))', DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        refline(0, 0); reflinexy(0,100);
    
-else
-    if(strcmpi(FileType, 'BDID'))
+    case 'BDID'
         figure(1123), clf, hist(IdBiasROC2);
         figure(1145), clf, clickscatter(TI, IdBiasROC2, 1, 7, fileNames); refline(0, 0.5);
-    else
-    figure(17), clf, clickscatter(TI, IdBiasROC1, pDs, 7, fileNames) %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-    refline(0, 0.5);
-    %figure, scatter(abs(TI), IdBiasROC1, [], reshape(([IdColor{:}]), 3,length(IdBiasROC1))', 'filled');
-    if (strcmp(FileType, 'TWO'))
-        figure(19), clf, clickscatter(FlipROC, IdBiasROC1, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+    case 'TWO'
+        figure(190), clf, clickscatter(IdBiasROC1, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
         refline(0, 0.5);
-    end
+        ylabel('Flip ROC');
+        xlabel('Main ROC');
+        ylim([0.3 0.8]);
+        xlim([0.2 0.9])
+        
+        
+        figure(842), clf, 
+        clickscatter(RFproximity, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        refline(0, 0.5);
+        ylabel('Flip ROC');
+        xlabel('RF proximity');
+        ylim([0.3 0.8]);
+        %xlim([0.2 0.9])
+        
+    otherwise
+        figure(17), clf, clickscatter(TI, IdBiasROC1, pDs, 7, fileNames) %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        refline(0, 0.5);
+        %figure, scatter(abs(TI), IdBiasROC1, [], reshape(([IdColor{:}]), 3,length(IdBiasROC1))', 'filled');
 
-    sum(BiaEff>0) / length(BiaEff) % percentage inclusion for Correctly biased thing
-    figure(23), clf, clickscatter(TI(BiaEff>0), IdBiasROC1(BiaEff>0),1, 7, fileNames); %, DotSizes(BiaEff>0), reshape(([IdColor{BiaEff>0}]), 3, sum(BiaEff>0))', 'filled');
-    refline(0, 0.5);
-    reflinexy(0,1);
-    end
+        sum(BiaEff>0) / length(BiaEff) % percentage inclusion for Correctly biased thing
+        figure(23), clf, clickscatter(TI(BiaEff>0), IdBiasROC1(BiaEff>0),1, 7, fileNames); %, DotSizes(BiaEff>0), reshape(([IdColor{BiaEff>0}]), 3, sum(BiaEff>0))', 'filled');
+        refline(0, 0.5);
+        reflinexy(0,1);
+  
 end
 %% Compaare with Bruce's
 % figure, scatter(IdBiasROC1, flipud(data(:,2)), DotSizes, reshape(([IdColor{:}]), 3,63)', 'filled');

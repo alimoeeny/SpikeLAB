@@ -10,7 +10,7 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % FileType = 'ABD';
 % StimulusType = 'cylinder';
 
-% % % DID
+% % % % DID
 % load('../AllDIDNeurons.mat');
 % AllNeurons = AllDIDNeurons;
 % clear AllDIDNeurons;
@@ -19,22 +19,22 @@ ShowSingleCellSDFs = 0; % 0 or 1
 
 
 % % % TWO
-load('../AllTWONeurons.mat');
-AllNeurons = AllTWONeurons;
-clear AllTWONeurons;
-FileType = 'TWO';
-StimulusType = 'cylinder';
+% load('../AllTWONeurons.mat');
+% AllNeurons = AllTWONeurons;
+% clear AllTWONeurons;
+% FileType = 'TWO';
+% StimulusType = 'cylinder';
 
-% % BDID
+% % % BDID
 % load('../AllBDIDNeuronsALL.mat');
 % AllNeurons = AllBDIDNeuronsALL;
 % clear AllBDIDNeuronsALL;
 % FileType = 'BDID';
 % StimulusType = 'cylinder';
-% AllNeurons = AllNeurons(1:37); 
-% %disp('= = = = = =  JUST LOOKING AT Adrian s  Cells = = = = = =');
-%  AllNeurons = AllNeurons(38:51); 
-%  disp('= = = = = =  Ignoring  Adrian s  Cells = = = = = =');
+% % AllNeurons = AllNeurons(1:37); 
+% % % %disp('= = = = = =  JUST LOOKING AT Adrian s  Cells = = = = = =');
+% % %  AllNeurons = AllNeurons(38:51); 
+% % %  disp('= = = = = =  Ignoring  Adrian s  Cells = = = = = =');
 
 % % % DIDB
 % load('../AllDIDBNeurons.mat');
@@ -54,6 +54,16 @@ StimulusType = 'cylinder';
 % clear AllDRIDNeurons AllSRIDNeurons;
 % StimulusType = 'rds';
 
+
+% % DPI
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
+StartTime  = 500;% 10000; %500; %10000; 
+FinishTime = 20000;
+
 %Prep
 DataPath = '/bgc/data/';
 BinSize = 50;%50;
@@ -63,7 +73,11 @@ SmthKernel = gausswin(SmoothingBinSize);
 filenamesforbruce = {};
 TI=[];
 
-% THIS IS THE SELETION OF DRID dx tunied experiemtns
+% AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
+% AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+% disp('  O N E   M O N K E Y   A T  A  T I M E ');
+
+% THIS IS THE SELECTION OF DRID dx tunied experiemtns
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
 for iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
@@ -83,7 +97,7 @@ for iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
             %end
         case 'BDID'
-            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
             slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd'); 
             %disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
@@ -92,11 +106,14 @@ for iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
             %[p, c, eb] = PlotPSTHTWO(NeuronNumber, FileType, StimulusType, BinSize, 0);
             %TI(iN) = TuningIndex(NeuronNumber, ClusterName, StimulusType, FileType, 'dx');
-          
+        case 'DPI'
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
     end
     
     %eb = convn(eb, SmthKernel')./ sum(SmthKernel);
     pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
+    orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID'))
         cellValid  = 1; vScore = 1;
     else
@@ -154,6 +171,9 @@ switch FileType
         criteria = (TI>0.1 | TI<-0.1);% & validCells;
 end
 
+% % only certain dx preferring cells
+% criteria = ((abs(TI)>0.1) & (pD==1));
+
 %% Graphics 
 
 %PopPSTH = mean(nPSTH);
@@ -175,7 +195,8 @@ end
 
 
 %%
-w_mode = 'trial_count';%'pref_trial'; %'pref'; %'trial_count';
+
+w_mode = 'norm_full';%'trial_count'; %'pref_init_trial';%'pref_trial'; %'pref'; %'trial_count';
 switch w_mode
     case 'trial_count'
         for wi =1: size(tPSTH,1)
@@ -189,15 +210,38 @@ switch w_mode
         end
     case 'pref'
         for wi =1: size(tPSTH,1)
-            prefMean = mean(squeeze(tPSTH(wi, 1, :)));
+            switch FileType
+                case 'DID'
+                    prefMean = mean(squeeze(tPSTH(wi, 1, :)));
+                case 'BDID'
+                    prefMean = mean(squeeze(tPSTH(wi, 7, :)));
+            end
             for wc = 1: size(AllConditions,2)
                 WtPSTH(wi,wc,:) = squeeze(tPSTH(wi,wc,:))/prefMean;
             end
         end
         WeightedPopPSTH = squeeze(mean(WtPSTH(criteria,:,:)));
+    case 'pref_init'
+        for wi =1: size(tPSTH,1)
+            switch FileType
+                case 'DID'
+                    prefMean = mean(squeeze(tPSTH(wi, 1, 250:750)));
+                case 'BDID'
+                    prefMean = mean(squeeze(tPSTH(wi, 7, 250:750)));
+            end
+            for wc = 1: size(AllConditions,2)
+                WtPSTH(wi,wc,:) = squeeze(tPSTH(wi,wc,:))/prefMean;
+            end
+        end
+        WeightedPopPSTH = squeeze(mean(WtPSTH(criteria,:,:)));    
     case 'pref_trial'
         for wi =1: size(tPSTH,1)
-            prefMean = mean(squeeze(tPSTH(wi, 1, :)));
+            switch FileType
+                case 'DID'
+                    prefMean = mean(squeeze(tPSTH(wi, 1, :)));
+                case 'BDID'
+                    prefMean = mean(squeeze(tPSTH(wi, 7, :)));
+            end
             for wc = 1: size(AllConditions,2)
                 WtPSTH(wi,wc,:) = squeeze(tPSTH(wi,wc,:))/prefMean;
             end
@@ -211,6 +255,40 @@ switch w_mode
         for i = 1: size(WeightedPopPSTH,2)
             WeightedPopPSTH(:,i) = WeightedPopPSTH(:,i) ./ sum(AllConditions(criteria,:))';
         end
+    case 'pref_init_trial'
+        for wi =1: size(tPSTH,1)
+            switch FileType
+                case 'DID'
+                    prefMean = mean(squeeze(tPSTH(wi, 1, 250:750)));
+                case 'BDID'
+                    prefMean = mean(squeeze(tPSTH(wi, 7, 250:750)));
+            end
+            for wc = 1: size(AllConditions,2)
+                WtPSTH(wi,wc,:) = squeeze(tPSTH(wi,wc,:))/prefMean;
+            end
+        end
+        for wi =1: size(tPSTH,1)
+            for wc = 1: size(AllConditions,2)
+                WtPSTH(wi,wc,:) = AllConditions(wi,wc) * squeeze(WtPSTH(wi,wc,:));
+            end
+        end
+        WeightedPopPSTH = squeeze(sum(WtPSTH(criteria,:,:)));
+        for i = 1: size(WeightedPopPSTH,2)
+            WeightedPopPSTH(:,i) = WeightedPopPSTH(:,i) ./ sum(AllConditions(criteria,:))';
+        end
+    case 'norm_full'
+        for wi =1: size(tPSTH,1)
+            switch FileType
+                case 'DID'
+                    prefMean = mean(squeeze(tPSTH(wi, 15, :)));
+                case 'BDID'
+                    prefMean = mean(squeeze(tPSTH(wi, 15, :)));
+            end
+            for wc = 1: size(AllConditions,2)
+                WtPSTH(wi,wc,:) = squeeze(tPSTH(wi,wc,:))/prefMean;
+            end
+        end
+        WeightedPopPSTH = squeeze(mean(WtPSTH(criteria,:,:)));
 
 end
 
@@ -222,6 +300,10 @@ switch FileType
         figure(142);
     case 'DRID'
         figure(143);
+    case 'DID'
+        figure(164);
+    case 'BDID'
+        figure(135);  
     otherwise
         figure(125);
 end
@@ -258,6 +340,102 @@ sum(criteria)
 %     plot(a(:,3) - a(:,4), 'r');
 % end
 
+%% Sliding Delta
+
+
+%colors= 'rgbcmykrgbcmykrgbcmykrgbcmykrgbcmykrgbcmykrgbcmykrgbcmykrgbcmyk';
+switch FileType
+    case {'BDID'}
+        figure(7231), clf
+        hold on,
+        [vss, idx] = sort(vs);
+        for i = 1:length(vs)-8
+            %criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            criteria = idx(i:i+8);
+            psq = squeeze(mean(tPSTH(criteria,:,:)))';
+            if (abs(TI(i))>0.1)
+                h = plot((psq(:,7) - psq(:,8)) ./ (psq(:,7) + psq(:,8)), 'Color', [(length(vs)-i)/400 (length(vs)-i)/150 (length(vs)-i)/200]);
+            end
+            d1(i) = mean(psq(200:800,7) - psq(200:800,8));
+            d2(i) = mean(psq(800:2200,7) - psq(800:2200,8));
+    
+            set(h, 'LineWidth', 2);
+        end
+    case {'DID'}
+        figure(7221), clf
+        hold on,
+        [vss, idx] = sort(vs);
+        for i = 1:length(vs)-8
+            %criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            criteria = idx(i:i+8);
+            PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
+            psq = squeeze(PopPSTH)';
+            h = plot((psq(:,1) - psq(:,2)) ./ (psq(:,1) + psq(:,2)), 'Color', [(length(vs)-i)/100 (length(vs)-i)/200 (length(vs)-i)/400]);
+            d1(i) = mean(psq(200:800,1) - psq(200:800,2));
+            d2(i) = mean(psq(800:2200,1) - psq(800:2200,2));
+    
+            set(h, 'LineWidth', 2);
+        end
+end
+        
+set(gca, 'XGrid', 'on');
+xlim([100 2200]);
+xtl = [0, 50, 500, 1000, 1500, 2000];
+set(gca, 'XTick', xtl+200-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+
+refline(0,0)
+
+figure(7222), plot(d1, 'r')
+hold on, plot(d2, 'b')
+
+
+%% Delta
+colors= 'rgbcmyk';
+switch FileType
+    case {'BDIDB'}
+        figure(723), clf
+        hold on,
+        thresholds = [0,0.01, 0.015, 0.1];
+
+        for i = 2:length(thresholds)
+            criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
+            psq = squeeze(PopPSTH)';
+            h = plot(psq(:,7) - psq(:,8), colors(i-1));
+            disp(sum(criteria))
+            set(h, 'LineWidth', 2);
+        end
+    case {'DID'}
+        figure(722), clf
+        hold on,
+        thresholds = [0,0.01, 0.02, 0.1];
+
+        for i = 2:length(thresholds)
+            criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
+            psq = squeeze(PopPSTH)';
+            h = plot(psq(:,1) - psq(:,2), colors(i-1));
+            disp(sum(criteria))
+            set(h, 'LineWidth', 2);
+        end
+end
+        
+set(gca, 'XGrid', 'on');
+xlim([100 2200]);
+xtl = [0, 50, 500, 1000, 1500, 2000];
+set(gca, 'XTick', xtl+200-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+
+refline(0,0)
+
+%% 
+
+figure(456), clf,
+
+clickscatter(rocs(:,4), rocs(:,3), 1, [], filenamesforbruce)
+
+
 %% Psych Effect vs Neuronal Id Effect
 
 switch FileType
@@ -275,7 +453,7 @@ switch FileType
 end
 
 figure(3250), clf, 
-brucescatter(PsychEff, NeuIdEff, 1, [], filenamesforbruce); 
+clickscatter(PsychEff, NeuIdEff, 1, [], filenamesforbruce); 
 hold on, 
 scatter(PsychEff(ors == 0 | ors == 180), NeuIdEff(ors == 0 | ors == 180),'r', 'filled');
 scatter(PsychEff(abs(ors) ==90 | ors == 270), NeuIdEff(abs(ors) ==90 | ors == 270),'b', 'filled');
@@ -288,7 +466,7 @@ refline(0,0.5)
 %% 
 
 figure(19734), clf, hold on, 
-brucescatter(rocs(:,1), rocs(:,2), 1, [], filenamesforbruce);
+clickscatter(rocs(:,1), rocs(:,2), 1, [], filenamesforbruce);
 refline(0, 0.5);
 
 %%
@@ -312,26 +490,26 @@ hold on, scatter(squeeze(mean(tPSTH(criteria,3,300:800),3)), squeeze(mean(tPSTH(
 %%
 
 figure(19834), clf, hold on, 
-brucescatter(squeeze(mean(tPSTH(criteria,4,300:800),3)), squeeze(mean(tPSTH(criteria,6,300:800),3)), 1, [], filenamesforbruce(criteria))
-brucescatter(squeeze(mean(tPSTH(criteria,3,300:800),3)), squeeze(mean(tPSTH(criteria,5,300:800),3)), 2, [], filenamesforbruce(criteria))
+clickscatter(squeeze(mean(tPSTH(criteria,4,300:800),3)), squeeze(mean(tPSTH(criteria,6,300:800),3)), 1, [], filenamesforbruce(criteria))
+clickscatter(squeeze(mean(tPSTH(criteria,3,300:800),3)), squeeze(mean(tPSTH(criteria,5,300:800),3)), 2, [], filenamesforbruce(criteria))
 
 %%
 figure(19844), clf, hold on, 
-brucescatter(squeeze(mean(tPSTH(:,4,300:800),3)), squeeze(mean(tPSTH(:,6,300:800),3)), 1, [], filenamesforbruce)
-brucescatter(squeeze(mean(tPSTH(:,3,300:800),3)), squeeze(mean(tPSTH(:,5,300:800),3)), 2, [], filenamesforbruce)
+clickscatter(squeeze(mean(tPSTH(:,4,300:800),3)), squeeze(mean(tPSTH(:,6,300:800),3)), 1, [], filenamesforbruce)
+clickscatter(squeeze(mean(tPSTH(:,3,300:800),3)), squeeze(mean(tPSTH(:,5,300:800),3)), 2, [], filenamesforbruce)
 
 
 %%
 
 figure(19934), clf, hold on, 
-brucescatter(squeeze(mean(tPSTH(criteria,4,300:800),3))- squeeze(mean(tPSTH(criteria,6,300:800),3)), squeeze(mean(tPSTH(criteria,3,300:800),3))- squeeze(mean(tPSTH(criteria,5,300:800),3)), 2, [], filenamesforbruce(criteria))
+clickscatter(squeeze(mean(tPSTH(criteria,4,300:800),3))- squeeze(mean(tPSTH(criteria,6,300:800),3)), squeeze(mean(tPSTH(criteria,3,300:800),3))- squeeze(mean(tPSTH(criteria,5,300:800),3)), 2, [], filenamesforbruce(criteria))
 
 
 %% relation between sd of gaussian fit to psychomtric function and the size of Id effect in BDID
 c= 0;
 for threshold = 0.2: -0.001:0  
     c = c + 1;
-    criteria = ((abs(TI)>0.1) & (vs(2,:) >0) & (vs(2,:)<threshold)); 
+    criteria = ((abs(TI)>0.1) & (vs >0) & (vs<threshold)); 
     p = squeeze(mean(tPSTH(criteria,:,:)));
     IdE(c) = mean(p(7,550:end) - p(8,550:end));
     IdSE(c) = std(p(7,550:end) - p(8,550:end))/sqrt(size(p,2)-550);
@@ -365,9 +543,9 @@ errorbar(IdE, IdSE);
 
 
 
-figure(817), clf, brucescatter(smeb(criteria,1), smeb(criteria,7), 1, 7, filenamesforbruce(criteria)); title(''); xlabel('dx pref, bd pref'); ylabel('dx pref, bd null'); refline(1);
-figure(828), clf, brucescatter(smeb(criteria,2), smeb(criteria,9), 3, 7, filenamesforbruce(criteria)); title(''); xlabel('dx null, bd pref'); ylabel('dx null, bd null'); refline(1);
-figure(836), clf, brucescatter(smeb(criteria,3), smeb(criteria,6), 2, 7, filenamesforbruce(criteria)); title(''); xlabel('dx zero, bd pref'); ylabel('dx zero, bd null'); refline(1);
+figure(817), clf, clickscatter(smeb(criteria,1), smeb(criteria,7), 1, 7, filenamesforbruce(criteria)); title(''); xlabel('dx pref, bd pref'); ylabel('dx pref, bd null'); refline(1);
+figure(828), clf, clickscatter(smeb(criteria,2), smeb(criteria,9), 3, 7, filenamesforbruce(criteria)); title(''); xlabel('dx null, bd pref'); ylabel('dx null, bd null'); refline(1);
+figure(836), clf, clickscatter(smeb(criteria,3), smeb(criteria,6), 2, 7, filenamesforbruce(criteria)); title(''); xlabel('dx zero, bd pref'); ylabel('dx zero, bd null'); refline(1);
 
 
 

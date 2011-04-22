@@ -13,15 +13,6 @@ switch FileType
         if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2)
             filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'XIdD.DT.mat');
         end
-    case 'BDID'
-%         filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.DT.mat');
-%         if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2)
-%             filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.DIDB.mat');
-%             if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~=2)
-%                 filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.DID.mat');
-%             end
-%         end
-        filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
 
     otherwise
         filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
@@ -62,7 +53,7 @@ end
 if FinishTime<6000
     StartTime = 500;
 end
-if (strcmp(FileType, 'BDID')|strcmp(FileType, 'DID'))
+if (strcmp(FileType, 'BDID')||strcmp(FileType, 'DID'))
     StartTime = 500;
     FinishTime = 5500;
 end
