@@ -13,7 +13,7 @@ switch filetype
     case {'TWO'}
         StartTime = 500;
         FinishTime = 20000;
-    case {'DT'}
+    case {'DT', 'OT'}
         StartTime = 500;
         FinishTime = 5500;
     case 'DPI'

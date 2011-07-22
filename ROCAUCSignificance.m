@@ -1,7 +1,7 @@
 function [rocauc1, pp, permutations] = ROCAUCSignificance(a, b)
 
 rocauc1 = ROCAUC(a, b);
-numRep = 1000;
+numRep = 3000;
 parfor rep = 1: numRep
     t = [a; b];
     ri = randperm(length(t));

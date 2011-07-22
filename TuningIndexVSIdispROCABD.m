@@ -28,6 +28,17 @@ FinishTime = 0;
 % StartTime  = 10000; %10000; % 6500; 
 % FinishTime = 20000;
 
+
+% % % DIDB
+% load ../AllDIDBNeurons.mat
+% AllNeurons = AllDIDBNeurons;
+% clear AllDIDBNeurons
+% FileType = 'DIDB';
+% StimulusType = 'cylinder';
+% StartTime  = 10000; %10000; % 6500; 
+% FinishTime = 20000;
+
+
 % % TWO
 % load('../AllTWONeurons.mat');
 % AllNeurons = AllTWONeurons;
@@ -38,31 +49,31 @@ FinishTime = 0;
 % FinishTime = 20000;
 
 % % DPI
-load('../AllPursuitNeurons.mat');
-AllNeurons = AllPursuitNeurons;
-clear AllPursuitNeurons;
-FileType = 'DPI';
-StimulusType = 'cylinder';
-StartTime  = 500;% 10000; %500; %10000; 
-FinishTime = 20000;
+% load('../AllPursuitNeurons.mat');
+% AllNeurons = AllPursuitNeurons;
+% clear AllPursuitNeurons;
+% FileType = 'DPI';
+% StimulusType = 'cylinder';
+% StartTime  = 500;% 10000; %500; %10000; 
+% FinishTime = 20000;
 
 
 % % % BDID
-% load('../AllBDIDNeuronsALL.mat');
-% AllNeurons = AllBDIDNeuronsALL;
-% clear AllBDIDNeurons;
-% FileType = 'BDID';
-% StimulusType = 'cylinder';
-% StartTime  = 10000;
-% FinishTime = 20000;
-% 
+load('../AllBDIDNeuronsALL.mat');
+AllNeurons = AllBDIDNeuronsALL;
+clear AllBDIDNeurons;
+FileType = 'BDID';
+StimulusType = 'cylinder';
+StartTime  = 10000;
+FinishTime = 20000;
+
 
 % AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
-% AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
-% disp('  O N E   M O N K E Y   A T  A  T I M E ');
+ AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+ disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
 %par
-for iN= [1 :length(AllNeurons)], 
+for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)], 
     if iN == 38
         debug = 1;
     end
@@ -92,7 +103,7 @@ for iN= [1 :length(AllNeurons)],
     conditions = logical([]);
     
     if strcmpi(FileType, 'DPI')
-         if isfield(Expt.Trials,'dfx')
+        if isfield(Expt.Trials,'dfx')
             deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
         else
             deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
@@ -294,7 +305,55 @@ for iN= [1 :length(AllNeurons)],
         IdBiasROC3(iN) = ROCAUC(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
         [rr, pp] = ROCAUCSignificance(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
         IdBiasROCSig3(iN) = pp;    
-    else % DID, ABD, TWO ...
+        
+        bdCrossTalk(iN) = 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(17,:))) / (sum(conditions(16,:)) + sum(conditions(17,:))) + ...
+                                     (sum(conditions(18,:)) - sum(conditions(19,:))) / (sum(conditions(18,:)) + sum(conditions(19,:))) );
+
+        bdCrossTalk2(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
+                                     (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );
+
+        bdCrossTalk3(iN)= 0.5 *    ( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
+                                     (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );                                 
+
+        bdCrossTalk4(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))))+ ...
+                                abs( (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))));
+                            
+        orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+         if (orS(iN)==90)
+             c1 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] > 0);
+             c2 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] < 0);
+             c3 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+             c4 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+         elseif (orS(iN)==-90)
+             c1 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+             c2 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] < 0);
+             c3 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] > 0);
+             c4 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] < 0);             
+         elseif (orS(iN)==0)
+             c1 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] > 0);
+             c2 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] < 0);
+             c3 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+             c4 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] < 0);             
+         elseif (orS(iN)==180)
+             c1 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+             c2 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] < 0);
+             c3 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] > 0);
+             c4 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] < 0);             
+         else 
+             c1 = 0; c2 = 0; c3 = 0; c4 = 0;
+             disp(['ORIENTATION IS :  ', num2str(orS(iN)), '  WWHHAATT CCAANN II DDOO == == == == == == == =='])
+         end
+         bdCrossTalk5(iN) = 0.5 * ( ...
+                            ((sum(c1) - sum(c2)) / (sum(c1) + sum(c2))) + ...
+                            ((sum(c4) - sum(c3)) / (sum(c4) + sum(c3))) );
+        
+        % Choice Probability for Id trials
+        IdCP1(iN) = ROCAUC(SpikeCounts(conditions(16,:)), SpikeCounts(conditions(17,:)));
+        IdCP2(iN) = ROCAUC(SpikeCounts(conditions(19,:)), SpikeCounts(conditions(18,:)));
+        IdCP3(iN) = 0.5 * (IdCP1(iN) + IdCP2(iN));
+        IdCP4(iN) = ROCAUC(SpikeCounts(conditions(16,:) | conditions(19,:)), SpikeCounts(conditions(17,:) | conditions(18,:)));
+ 
+    else % DID, ABD, TWO, DIDB, ...
         IdBiasROC1(iN) = ROCAUC(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:)));
         [rr, pp] = ROCAUCSignificance(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:))); 
         IdBiasROCSig(iN) = pp;
@@ -307,8 +366,13 @@ for iN= [1 :length(AllNeurons)],
         aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
         bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
         Next2ZeroROCZScored(iN) = ROCAUC(aa, bb);
+        Next2ZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(16,:)), SpikeCounts(conditions(17,:)));
+        Next2ZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(18,:)), SpikeCounts(conditions(19,:)));
+        w1 = min(sum(conditions(16,:)),sum(conditions(17,:))); if (w1==0), w1 = max(sum(conditions(16,:)),sum(conditions(17,:))); end
+        w2 = min(sum(conditions(18,:)),sum(conditions(19,:))); if (w2==0), w2 = max(sum(conditions(18,:)),sum(conditions(19,:))); end
+        Next2ZeroROCPNWeigh(iN)= ((Next2ZeroROCNull(iN) * w1) + (Next2ZeroROCNull(iN) * w2)) / (w1 + w2);
         orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    end
+            end
     switch FileType
         case {'TWO', 'BDID'}
             if Expt.Stimvals.bo == Expt.Stimvals.or
@@ -317,7 +381,8 @@ for iN= [1 :length(AllNeurons)],
                 Manip(iN) = 2;
             end
         otherwise
-            CP(iN)      = ROCAUC(SpikeCounts(conditions(7,:)), SpikeCounts(conditions(8,:)));
+            %CP(iN)      = ROCAUC(SpikeCounts(conditions(7,:)), SpikeCounts(conditions(8,:)));
+            CP(iN)      = ROCAUC(SpikeCounts(conditions(20,:)), SpikeCounts(conditions(21,:)));
             CPPref(iN)  = ROCAUC(SpikeCounts(conditions(3,:)), SpikeCounts(conditions(5,:))); %CPPref(iN)  = ROCAUC(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
             CPNull(iN)  = ROCAUC(SpikeCounts(conditions(4,:)), SpikeCounts(conditions(6,:))); %CPNull(iN)  = ROCAUC(SpikeCounts(conditions(11,:)), SpikeCounts(conditions(12,:)));
             %CP1(iN)     = ROCAUC(SpikeCounts(conditions(3,:)), SpikeCounts(conditions(5,:)));
@@ -432,6 +497,11 @@ for iN= [1 :length(AllNeurons)],
     end
 end
 
+%% crosstalk
+
+figure, hist(bdCrossTalk5(abs(orS)==90))
+hold on , hist(bdCrossTalk5((orS==0) | (abs(orS)==180)))
+
 %% or
 
 bb = [0 45 90 135 ];
@@ -459,17 +529,7 @@ figure(698), scatter(orSm, BiaEff, 'filled')
 
 
 
-%% ROC distribution analysis  
-% is our ROCs come from a single distribution or two or more groups of neurons
 
-ROCvarTest(ROCpairs1);
-if strcmp(FileType, 'TWO')
-    ROCvarTest(ROCpairsFlip);
-% else
-%     if strcmp(FileType, 'BDID')
-%         ROCvarTest(ROCpairsFlip);
-%     end
-end
 %% Graphics
 
 switch(FileType)
@@ -528,6 +588,21 @@ switch(FileType)
         reflinexy(0,1);
   
 end
+
+
+%% ROC distribution analysis
+% is our ROCs come from a single distribution or two or more groups of neurons
+
+ROCvarTest(ROCpairs1);
+if strcmp(FileType, 'TWO')
+    ROCvarTest(ROCpairsFlip);
+% else
+%     if strcmp(FileType, 'BDID')
+%         ROCvarTest(ROCpairsFlip);
+%     end
+end
+
+
 %% Compaare with Bruce's
 % figure, scatter(IdBiasROC1, flipud(data(:,2)), DotSizes, reshape(([IdColor{:}]), 3,63)', 'filled');
 % 

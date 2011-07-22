@@ -26,11 +26,11 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % StimulusType = 'cylinder';
 
 % % % BDID
-% load('../AllBDIDNeuronsALL.mat');
-% AllNeurons = AllBDIDNeuronsALL;
-% clear AllBDIDNeuronsALL;
-% FileType = 'BDID';
-% StimulusType = 'cylinder';
+load('../AllBDIDNeuronsALL.mat');
+AllNeurons = AllBDIDNeuronsALL;
+clear AllBDIDNeuronsALL;
+FileType = 'BDID';
+StimulusType = 'cylinder';
 % % AllNeurons = AllNeurons(1:37); 
 % % % %disp('= = = = = =  JUST LOOKING AT Adrian s  Cells = = = = = =');
 % % %  AllNeurons = AllNeurons(38:51); 
@@ -42,6 +42,7 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % clear AllDIDBNeurons;
 % FileType = 'DIDB';
 % StimulusType = 'cylinder';
+
 
 % % DRID
 % load('../AllDRIDNeurons.mat');
@@ -55,14 +56,14 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % StimulusType = 'rds';
 
 
-% % DPI
-load('../AllPursuitNeurons.mat');
-AllNeurons = AllPursuitNeurons;
-clear AllPursuitNeurons;
-FileType = 'DPI';
-StimulusType = 'cylinder';
-StartTime  = 500;% 10000; %500; %10000; 
-FinishTime = 20000;
+% % % DPI
+% load('../AllPursuitNeurons.mat');
+% AllNeurons = AllPursuitNeurons;
+% clear AllPursuitNeurons;
+% FileType = 'DPI';
+% StimulusType = 'cylinder';
+% % % % %%%StartTime  = 500;% 10000; %500; %10000; 
+% % % % %%%FinishTime = 20000;
 
 %Prep
 DataPath = '/bgc/data/';
@@ -73,14 +74,14 @@ SmthKernel = gausswin(SmoothingBinSize);
 filenamesforbruce = {};
 TI=[];
 
-% AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
-% AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
-% disp('  O N E   M O N K E Y   A T  A  T I M E ');
+%AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
+AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
 % THIS IS THE SELECTION OF DRID dx tunied experiemtns
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
-for iN= 1:length(AllNeurons) %[length(AllNeurons):-1:1], 1:length(AllNeurons)
+parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
@@ -168,11 +169,12 @@ switch FileType
         %criteria = ((abs(TI)>0.1) & (vs(2,:) >0) & (vs(2,:)<0.01));
         criteria = ((abs(TI)>0.1) & (vs >0) & (vs<0.01));
     case 'TWO'
+        criteria = (TI>0.1 | TI<-0.1);% & validCells;  
+    case 'DPI'
         criteria = (TI>0.1 | TI<-0.1);% & validCells;
 end
 
-% % only certain dx preferring cells
-% criteria = ((abs(TI)>0.1) & (pD==1));
+%figure, plot(cumsum(criteria));
 
 %% Graphics 
 
@@ -196,7 +198,7 @@ end
 
 %%
 
-w_mode = 'norm_full';%'trial_count'; %'pref_init_trial';%'pref_trial'; %'pref'; %'trial_count';
+w_mode = 'trial_count';%'trial_count'; %'pref_init_trial';%'pref_trial'; %'pref'; %'trial_count';
 switch w_mode
     case 'trial_count'
         for wi =1: size(tPSTH,1)
@@ -301,15 +303,17 @@ switch FileType
     case 'DRID'
         figure(143);
     case 'DID'
-        figure(164);
+        figure(162);
     case 'BDID'
-        figure(135);  
+        figure(136);  
+    case 'DPI'
+        figure(185);
     otherwise
         figure(125);
 end
 clf, hold on,  
-h = plot(squeeze(PopPSTH)');
-%h = plot(squeeze(WeightedPopPSTH)');
+%h = plot(squeeze(PopPSTH)');
+h = plot(squeeze(WeightedPopPSTH)');
 if strfind(FileType, 'RID')
     plot(PopPSTH(1,:) - PopPSTH(2,:), 'm', 'LineWidth', 2);
     plot(PopPSTH(3,:) - PopPSTH(4,:), 'k', 'LineWidth', 2);
@@ -339,6 +343,8 @@ sum(criteria)
 %     plot(a(:,1) - a(:,2), 'r:');
 %     plot(a(:,3) - a(:,4), 'r');
 % end
+
+
 
 %% Sliding Delta
 
@@ -548,5 +554,30 @@ figure(828), clf, clickscatter(smeb(criteria,2), smeb(criteria,9), 3, 7, filenam
 figure(836), clf, clickscatter(smeb(criteria,3), smeb(criteria,6), 2, 7, filenamesforbruce(criteria)); title(''); xlabel('dx zero, bd pref'); ylabel('dx zero, bd null'); refline(1);
 
 
+%% DPI index
+
+for iN = 1: length(AllNeurons)
+    [a,x, y, z] = ttest(PSTHs{1,iN}{3}(1,:) ,PSTHs{1,iN}{3}(2,:), 0.001);
+    b = mean(PSTHs{1,iN}{3}(1,:) - PSTHs{1,iN}{3}(2,:)) / mean(PSTHs{1,iN}{3}(2,:));
+    p = anova1([PSTHs{1,iN}{3}(1,:); PSTHs{1,iN}{3}(2,:); PSTHs{1,iN}{3}(3,:)]', [], 'off');
+    
+    conditions = PSTHs{1,iN}{2};
+    
+    d =  mean([mean(PSTHs{1,iN}{1}(conditions(3,:),:),2) ; mean(PSTHs{1,iN}{1}(conditions(4,:),:),2)]) - ...
+         mean([mean(PSTHs{1,iN}{1}(conditions(5,:),:),2) ; mean(PSTHs{1,iN}{1}(conditions(6,:),:),2)]) ;
+    e =  ( mean(mean(PSTHs{1,iN}{1}(conditions(1,:),:),2)) - mean(mean(PSTHs{1,iN}{1}(conditions(2,:),:),2)) );
+    
+    %d = mean( (PSTHs{1,iN}{3}(3,:) + PSTHs{1,iN}{3}(4,:)) - (PSTHs{1,iN}{3}(5,:) + PSTHs{1,iN}{3}(6,:)) ) * 0.5 ;
+    %r = mean(  PSTHs{1,iN}{3}(1,:) - PSTHs{1,iN}{3}(2,:)) / d;
+    
+    disp([abs(TI(iN))>0.1,a, b, p, e, e / d]);
+    aa = a;
+    pp(iN) = p;
+    bb(iN) = b;
+    ee(iN) = e;
+    dd(iN) = d;
+end
+
+disp(mean(ee) / mean(dd));
 
 

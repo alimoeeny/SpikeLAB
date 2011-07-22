@@ -37,6 +37,16 @@ switch FileType
     case 'DID'
         StartTime = 500;
         values = unique([Expt.Trials.(reqparam)]);
+%        values = values(abs(values) > 0.01);
+%        values = values(abs(values)< 0.01);
+%         a = floor(length(values)/2);
+%         if(a < length(values) / 2)
+%             b = a + 2;
+%         else
+%             b = a + 1;
+%         end
+%         values = values([a b]);
+%        disp('TI BASED ONLY ON VALUES BETWEEN -0.01 and 0.01 - - - - -- - - - - - - ');
     case 'BDID'
         StartTime = 500;
         values = unique([Expt.Trials.(reqparam)]);
@@ -62,7 +72,7 @@ for tr = 1: length([Expt.Trials]),
     SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
 end
 
-eb=[];
+eb=[]; cb = [];
 for i = 1:length(values)
     if strcmp(FileType,'TWO')
         eb(i) = mean(SpikeCounts([Expt.Trials.('dx')]==values(i)));
@@ -73,9 +83,20 @@ for i = 1:length(values)
     end
 end
 
-TI = (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) - sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) ) / ...
-     (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) + sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) );
+for i = 1:floor(length(eb)/2)
+    a = i;
+    b = 1 + length(eb) - i;
+    tis(i) = (sum(eb(a) .* cb(a)) ./ mean(cb(a)) - sum(eb(b) .* cb(b)) ./ mean(cb(b)) ) / ...
+     (sum(eb(a) .* cb(a)) ./ mean(cb(a)) + sum(eb(b) .* cb(b)) ./ mean(cb(b)) );
+end
 
+TI = max(tis);
+if (TI < abs(min(tis)))
+    TI = min(tis);
+end
+
+% TI = (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) - sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) ) / ...
+%      (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) + sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) );
 
 
 

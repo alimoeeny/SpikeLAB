@@ -11,7 +11,7 @@ end
 values = tmpdxvals;     
 
 
-if iseven(length(values))
+if (rem(length(values),2)==0)
     disp('WHAT IS GOING ON HERE?')
 end
 

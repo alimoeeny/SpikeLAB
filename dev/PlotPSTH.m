@@ -29,7 +29,14 @@ else
     end
 end
 
-conditions = GetConditions(Expt, FileType, pD);
+try
+    rdsPrefDir = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName);
+catch
+    disp('rdsPrefDir FAILED HERE ! ! ');
+    rdsPrefDir = Expt.Stimvals.or;
+end
+
+conditions = GetConditions(Expt, FileType, pD, rdsPrefDir);
 
 StartTime = -2000; %1; %5500;
 if(isfield(Expt.Trials, 'dur'))
@@ -124,8 +131,8 @@ switch FileType
         %roc1 = ROCAUC(PSTH(conditions(3,:),50:550),PSTH(conditions(5,:),50:550));
         %roc2 = ROCAUC(PSTH(conditions(6,:),50:550),PSTH(conditions(4,:),50:550));
         %disp(['First 500ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
-        roc1 = ROCAUC(PSTH(conditions(3,:),300:800),PSTH(conditions(5,:),300:800));
-        roc2 = ROCAUC(PSTH(conditions(6,:),300:800),PSTH(conditions(4,:),300:800));
+        roc1 = ROCAUC(mean(PSTH(conditions(3,:),300:800),2),mean(PSTH(conditions(5,:),300:800),2));
+        roc2 = ROCAUC(mean(PSTH(conditions(6,:),300:800),2),mean(PSTH(conditions(4,:),300:800),2));
         disp(['First 100-600ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
         a = zscore(mean(PSTH(conditions( 9,:)|conditions(10,:), 200:2100),2)); %1100:2100),2));
         b = zscore(mean(PSTH(conditions(11,:)|conditions(12,:), 200:2100),2)); %1100:2100),2));
@@ -133,7 +140,9 @@ switch FileType
         bb = [a(sum(conditions(9,:))+1 : sum(conditions(9,:))+sum(conditions(10,:))) ; b(sum(conditions(11,:))+1 : sum(conditions(11,:))+sum(conditions(12,:)))];
         roc3 = ROCAUC(aa, bb);
         %main effect ROC 
-        roc4 = ROCAUC(PSTH(conditions(1,:),1200:2200),PSTH(conditions(2,:),1200:2200));
+        %roc4 = ROCAUC(PSTH(conditions(1,:),1200:2200),PSTH(conditions(2,:),1200:2200));
+        [roc4, sig4, tmp] = ROCAUCSignificance(mean(PSTH(conditions(1,:),1200:2200),2),mean(PSTH(conditions(2,:),1200:2200),2));
+        disp(['-------- --------- ---------- ------------ Main Effect sig:    ' , num2str(roc4), '   ===   ', num2str(sig4)]);
         roc5 = ROCAUC(PSTH(conditions(1,:),1000:2000),PSTH(conditions(2,:),1000:2000));
         %next to zero Stimulus AND choice
         roc6 = ROCAUC(PSTH(conditions(13,:),300:2000),PSTH(conditions(14,:),300:2000));
@@ -156,6 +165,10 @@ switch FileType
         %main effect ROC 
         roc4 = ROCAUC(PSTH(conditions(7,:),1200:2200),PSTH(conditions(8,:),1200:2200));
         varargout{1}(4) = roc4;
+    case 'DPI' 
+        eb(7,:) = eb(1,:) - eb(2,:);
+        eb(8,:) = eb(3,:) - eb(4,:);
+        eb(9,:) = eb(5,:) - eb(6,:);
 end
 
 if(PlotIt)
@@ -176,6 +189,10 @@ if(PlotIt)
             figure(17819),h = plot(eb(7:8,:)');
             legend(h, GetLegends(FileType));
             %legend('Pref bd Pref Id', 'Pref bd null Id', 'Pref bd pref Id and correct response', 'Pref bd Pref Id wrong response', 'null bd null Id correct response', 'null bd null Id wrong response', 'Preff Id', 'Null Id');
+        case 'DPI'
+            figure(16919),h = plot(eb');
+            legend(h, GetLegends(FileType));
+            refline(0);
         otherwise
             figure(19635),h = plot(eb');
             legend(h, GetLegends(FileType));

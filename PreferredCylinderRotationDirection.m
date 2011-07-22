@@ -3,6 +3,19 @@ function [pd] = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, Clu
 % arguments Monkey name,  neuron number, clustername, fiiletype, Include zero or not,
 % 'forced' (forced to use the filetype given not to use ABD if available or ...)
 
+% manual mapping for tricky neurons
+% positive pref
+if (sum(strcmpi([MonkeyName, num2str(NeuronNumber)],{'dae523'; ''}))>0)
+    pd = 1;
+    return
+end
+% negative pref
+if (sum(strcmpi([MonkeyName, num2str(NeuronNumber)],{''; ''}))>0)
+    pd = 2;
+    return
+end
+
+
 if(nargin==1)
     Expt = MonkeyName;
     FileType = 'NNN';

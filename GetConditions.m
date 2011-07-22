@@ -1,4 +1,4 @@
-function [conditions, r2p, r2n] = GetConditions(Expt, FileType, PrefDir)
+function [conditions, r2p, r2n] = GetConditions(Expt, FileType, PrefCyldx, PrefrdsDir)
 
 ResponseToPositive = 0;
 ResponseToNegative = 0;
@@ -6,8 +6,58 @@ ResponseToNegative = 0;
 conditions = logical([]);
 switch upper(FileType) 
     case 'DPI'
-        conditions(1,:) = ones(1, length([Expt.Trials(:)]));
-    
+        if isfield(Expt.Trials,'dfx')
+            deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
+            dfxy = [Expt.Trials(:).dfx];
+        else
+            deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
+            dfxy = [Expt.Trials(:).dfy];
+        end
+        tempdelta = fix(deltafxy);
+        tempd = fix(dfxy);
+        for td = 1: length(tempdelta)
+            if tempdelta(td) == 0
+                tempdelta(td) = 0.5 * sign(deltafxy(td));
+            end
+        end
+        deltafxy = tempdelta; % fix(deltafxy);  %  0.2 * fix(5*deltafxy); %0.1 * round(10*deltafxy);
+        dfxy = tempd;
+        Speeds = unique(abs(deltafxy));
+        if(PrefCyldx==2)
+           %if((Expt.Stimvals.or>0) && (Expt.Stimvals.or<=180))
+            if (sign(PrefrdsDir) == 1)
+               conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+               conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+               conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+               conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+               conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+            else 
+               conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+               conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+               conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+               conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+               conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+               conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+            end
+        else   
+           %if((Expt.Stimvals.or>0) && (Expt.Stimvals.or<=180))
+            if (sign(PrefrdsDir) == 1)
+               conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+               conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+               conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+               conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+               conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+            else 
+               conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+               conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+               conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+               conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+               conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+            end
+        end
     case 'DT'
         conditions(1,:) = ones(1, length([Expt.Trials(:)]));
 
@@ -27,7 +77,7 @@ switch upper(FileType)
             ResponseToPositive = -1;
             ResponseToNegative = 1;
         end
-        if(PrefDir == 2)
+        if(PrefCyldx == 2)
             conditions(1,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]~=0;
             conditions(2,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]~=0;
             conditions(3,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
@@ -44,6 +94,11 @@ switch upper(FileType)
             conditions(12,:)= [Expt.Trials(:).bd] == min([Expt.Trials([Expt.Trials(:).bd]>0).bd]);
             
             conditions(15,:) = [Expt.Trials(:).RespDir]~=0; % All completed trials for normalization
+
+            conditions(16,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(17,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            conditions(18,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            conditions(19,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
         else
             conditions(1,:) = [Expt.Trials(:).bd]>0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]~=0;
             conditions(2,:) = [Expt.Trials(:).bd]>0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]~=0;
@@ -59,6 +114,12 @@ switch upper(FileType)
             conditions(12,:)= [Expt.Trials(:).bd] == max([Expt.Trials([Expt.Trials(:).bd]<0).bd]);
 
             conditions(15,:) = [Expt.Trials(:).RespDir]~=0; % All completed trials for normalization
+
+            conditions(16,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(17,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            conditions(18,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(19,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+                    
         end
     
     case 'TWO'
@@ -72,7 +133,7 @@ switch upper(FileType)
         if (max([Expt.Trials(:).bd])~=max([Expt.Trials(:).dx]) || min([Expt.Trials(:).bd]) ~= min([Expt.Trials(:).dx]))
             disp('max min dx bd something does not match');
         end
-        if(PrefDir == 2)
+        if(PrefCyldx == 2)
             conditions(1,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]<0 & [Expt.Trials(:).RespDir]~=0;
             conditions(2,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]>0 & [Expt.Trials(:).RespDir]~=0;
             conditions(3,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
@@ -123,7 +184,7 @@ switch upper(FileType)
             Nor = ORs(1);
             Por = ORs(end);
         end            
-        if(PrefDir == 2)
+        if(PrefCyldx == 2)
             conditions(1,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).or]==Por;
             conditions(2,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).or]==Por;
             conditions(3,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).or]==Nor;
@@ -145,7 +206,7 @@ switch upper(FileType)
             ResponseToNegative = 1;
         end
         TP = NotDoingVeryGood(Expt);
-        if(PrefDir == 2) % DID , ...
+        if(PrefCyldx == 2) % DID , ...
             conditions(1,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
             conditions(2,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
             conditions(3,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToNegative;%7
@@ -168,11 +229,18 @@ switch upper(FileType)
             conditions(14,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]);
             conditions(15,:) = [Expt.Trials(:).RespDir]~=0; % All completed trials for normalization
 
-            % 16 - 19 are the the two bds near zero disparity. 
+            % 16 - 19 are the the two dxs near zero disparity. 
             conditions(16,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
             conditions(17,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
             conditions(18,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
             conditions(19,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            
+            % CP
+            conditions(20,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).Id] == 0 ) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
+            conditions(21,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).Id] == 0 ) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
+            
+            conditions(22,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
+            conditions(23,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
 
         else 
             conditions(1,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
@@ -196,11 +264,19 @@ switch upper(FileType)
             conditions(14,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]);
             conditions(15,:) = [Expt.Trials(:).RespDir]~=0; % All completed trials for normalization
 
-            % 16 - 19 are the the two bds near zero disparity. 
+            % 16 - 19 are the the two dxs near zero disparity. 
             conditions(16,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
             conditions(17,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
             conditions(18,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
             conditions(19,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            
+            % CP
+            conditions(20,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).Id] == 0) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
+            conditions(21,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).Id] == 0) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
+
+            conditions(22,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
+            conditions(23,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
+
         end
     otherwise
         if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
@@ -210,7 +286,7 @@ switch upper(FileType)
             ResponseToPositive = -1;
             ResponseToNegative = 1;
         end
-        if(PrefDir == 2)
+        if(PrefCyldx == 2)
             conditions(1,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
             conditions(2,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
             conditions(3,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
