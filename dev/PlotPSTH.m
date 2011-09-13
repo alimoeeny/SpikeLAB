@@ -166,11 +166,12 @@ switch FileType
         roc4 = ROCAUC(PSTH(conditions(7,:),1200:2200),PSTH(conditions(8,:),1200:2200));
         varargout{1}(4) = roc4;
     case 'DPI' 
-        eb(7,:) = eb(1,:) - eb(2,:);
-        eb(8,:) = eb(3,:) - eb(4,:);
-        eb(9,:) = eb(5,:) - eb(6,:);
+        eb(size(eb,1)+1, :) = eb(1,:) - eb(2,:);
+        eb(size(eb,1)+1, :) = eb(3,:) - eb(4,:);
+        eb(size(eb,1)+1, :) = eb(5,:) - eb(6,:);
 end
 
+warning off
 if(PlotIt)
     switch upper(FileType) 
         case {'SRID', 'DRID'}
@@ -190,7 +191,7 @@ if(PlotIt)
             legend(h, GetLegends(FileType));
             %legend('Pref bd Pref Id', 'Pref bd null Id', 'Pref bd pref Id and correct response', 'Pref bd Pref Id wrong response', 'null bd null Id correct response', 'null bd null Id wrong response', 'Preff Id', 'Null Id');
         case 'DPI'
-            figure(16919),h = plot(eb');
+            figure(16919), h = plot(eb');
             legend(h, GetLegends(FileType));
             refline(0);
         otherwise
@@ -220,3 +221,4 @@ if(PlotIt)
 %     end
     
 end
+warning on

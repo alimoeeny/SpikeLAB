@@ -19,6 +19,11 @@ switch FileType
     
 end
 
+if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2)
+    TI = -999;
+    return
+end
+
 Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
 Expt = Neuron.Expt;
 

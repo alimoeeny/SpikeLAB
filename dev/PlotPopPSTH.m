@@ -1,5 +1,5 @@
 clear;
-clc;
+%clc;
 
 ShowSingleCellSDFs = 0; % 0 or 1
 
@@ -26,11 +26,11 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % StimulusType = 'cylinder';
 
 % % % BDID
-load('../AllBDIDNeuronsALL.mat');
-AllNeurons = AllBDIDNeuronsALL;
-clear AllBDIDNeuronsALL;
-FileType = 'BDID';
-StimulusType = 'cylinder';
+% load('../AllBDIDNeuronsALL.mat');
+% AllNeurons = AllBDIDNeuronsALL;
+% clear AllBDIDNeuronsALL;
+% FileType = 'BDID';
+% StimulusType = 'cylinder';
 % % AllNeurons = AllNeurons(1:37); 
 % % % %disp('= = = = = =  JUST LOOKING AT Adrian s  Cells = = = = = =');
 % % %  AllNeurons = AllNeurons(38:51); 
@@ -57,16 +57,16 @@ StimulusType = 'cylinder';
 
 
 % % % DPI
-% load('../AllPursuitNeurons.mat');
-% AllNeurons = AllPursuitNeurons;
-% clear AllPursuitNeurons;
-% FileType = 'DPI';
-% StimulusType = 'cylinder';
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
 % % % % %%%StartTime  = 500;% 10000; %500; %10000; 
 % % % % %%%FinishTime = 20000;
 
 %Prep
-DataPath = '/bgc/data/';
+DataPath = GetDataPath();
 BinSize = 50;%50;
 SmoothingBinSize = 1;%50
 SmthKernel = gausswin(SmoothingBinSize);
@@ -74,14 +74,14 @@ SmthKernel = gausswin(SmoothingBinSize);
 filenamesforbruce = {};
 TI=[];
 
-%AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
-AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
-disp('  O N E   M O N K E Y   A T  A  T I M E ');
+% AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
+% AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+% disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
 % THIS IS THE SELECTION OF DRID dx tunied experiemtns
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
-parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
+for iN= length(AllNeurons):-1:1 %1:length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
@@ -122,6 +122,7 @@ parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
     end
     PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX};
     filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
 end
 
 %%
@@ -135,7 +136,7 @@ for i = 1 : length(AllNeurons),
         %xCs(i,:,:) = PSTHs{i}{9};
         ebX = (PSTHs{i}{10});
         p = ([PSTHs{i}{1}]);
-        if (isempty(AllConditions)) AllConditions = zeros(length(AllNeurons), length(sum([PSTHs{i}{2}],2))); end
+        if (isempty(AllConditions)) AllConditions = zeros(length(AllNeurons), length(sum([PSTHs{i}{2}],2))); end 
         AllConditions(i,:) = sum([PSTHs{i}{2}],2);
         eb = ([PSTHs{i}{3}]);
         pD(i) = ([PSTHs{i}{6}]);
@@ -174,6 +175,9 @@ switch FileType
         criteria = (TI>0.1 | TI<-0.1);% & validCells;
 end
 
+
+%criteria = criteria & ([binoc{:}]>5.07);
+criteria = criteria & (TI<0);
 %figure, plot(cumsum(criteria));
 
 %% Graphics 
@@ -307,13 +311,13 @@ switch FileType
     case 'BDID'
         figure(136);  
     case 'DPI'
-        figure(185);
+        figure(188);
     otherwise
         figure(125);
 end
 clf, hold on,  
-%h = plot(squeeze(PopPSTH)');
-h = plot(squeeze(WeightedPopPSTH)');
+h = plot(squeeze(PopPSTH)');
+%h = plot(squeeze(WeightedPopPSTH)');
 if strfind(FileType, 'RID')
     plot(PopPSTH(1,:) - PopPSTH(2,:), 'm', 'LineWidth', 2);
     plot(PopPSTH(3,:) - PopPSTH(4,:), 'k', 'LineWidth', 2);

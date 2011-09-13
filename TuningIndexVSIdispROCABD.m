@@ -4,6 +4,7 @@
 
 clear;
 clc
+cd /Users/moeenya/Dropbox/Projects/SpikeLAB/dev
 
 DataPath = GetDataPath();
 
@@ -20,13 +21,13 @@ FinishTime = 0;
 % FinishTime = 20000;
 
 % % % DID
-% load ../AllDIDNeurons.mat
-% AllNeurons = AllDIDNeurons;
-% clear AllDIDNeurons
-% FileType = 'DID';
-% StimulusType = 'cylinder';
-% StartTime  = 10000; %10000; % 6500; 
-% FinishTime = 20000;
+load ../AllDIDNeurons.mat
+AllNeurons = AllDIDNeurons;
+clear AllDIDNeurons
+FileType = 'DID';
+StimulusType = 'cylinder';
+StartTime  = 10000; %10000; % 6500; 
+FinishTime = 20000;
 
 
 % % % DIDB
@@ -48,7 +49,7 @@ FinishTime = 0;
 % StartTime  = 500; %10000; %5500; 
 % FinishTime = 20000;
 
-% % DPI
+% % DPI Cylinder
 % load('../AllPursuitNeurons.mat');
 % AllNeurons = AllPursuitNeurons;
 % clear AllPursuitNeurons;
@@ -58,31 +59,53 @@ FinishTime = 0;
 % FinishTime = 20000;
 
 
+% % DPI rds
+% load('../AllPursuitNeuronsrds.mat');
+% AllNeurons = AllPursuitNeuronsrds;
+% clear AllPursuitNeuronsrds;
+% FileType = 'DPI';
+% StimulusType = 'rds';
+% StartTime  = 500;% 10000; %500; %10000; 
+% FinishTime = 20000;
+%  
+
+% % JPI rds
+% load('../AllPursuitNeuronsJPIrds.mat');
+% AllNeurons = AllPursuitNeuronsJPIrds;
+% clear AllPursuitNeuronsJPIrds;
+% FileType = 'JPI';
+% StimulusType = 'rds';
+% StartTime  = 500;% 10000; %500; %10000; 
+% FinishTime = 20000;
+
+
 % % % BDID
-load('../AllBDIDNeuronsALL.mat');
-AllNeurons = AllBDIDNeuronsALL;
-clear AllBDIDNeurons;
-FileType = 'BDID';
-StimulusType = 'cylinder';
-StartTime  = 10000;
-FinishTime = 20000;
+% load('../AllBDIDNeuronsALL.mat');
+% AllNeurons = AllBDIDNeuronsALL;
+% clear AllBDIDNeurons;
+% FileType = 'BDID';
+% StimulusType = 'cylinder';
+% StartTime  = 10000;
+% FinishTime = 20000;
 
 
-% AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
- AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
- disp('  O N E   M O N K E Y   A T  A  T I M E ');
+%  AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
+%  AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
+%  disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
 %par
 for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)], 
-    if iN == 38
+    if iN == 28
         debug = 1;
     end
+    
     IdColor{iN} = [1 0.5 0.1];
     DotSizes(iN) = 100;
     toolowFR = 0;
     NeuronNumber = AllNeurons(iN);
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronNumber); 
     TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT');
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d'), ' - ' , MonkeyName));
     
     filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
@@ -90,69 +113,181 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     Expt = Neuron.Expt;
     fileNames{iN} = filename; 
     
-    pD      = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
-    %if TI(iN) > 0, pD = 1; else pD = 2; end
-    pDs(iN) = pD;
+    orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    
+    if strcmpi(StimulusType, 'cylinder')
+        pD      = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
+        %if TI(iN) > 0, pD = 1; else pD = 2; end
+        pDs(iN) = pD;
 
-    if (pD == -1) 
-        disp('Ohoooy! pD? what are you D O I N G ! ? ');
+        if (pD == -1) 
+            disp('Ohoooy! pD? what are you D O I N G ! ? ');
+        end
+    else
+        pD = -2;
     end
     
+    if strcmpi(FileType, 'rds')
+        prefRDSdx(iN) =  PreferredRDSDisparity(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
+    end
     %conditions = GetConditions(Expt, FileType, pD);
-
+    try
+        rdsPrefDirFailed = 0;
+        rdsPrefDir = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName);
+    catch e
+        rdsPrefDirFailed = 1;
+        disp('rdsPrefDir FAILED HERE ! ! ');
+    end
+    if (rdsPrefDirFailed || (length(rdsPrefDir)>1))
+        rdsPrefDir = Expt.Stimvals.or;
+    end
+    prdsDir(iN) = rdsPrefDir;
+    
     conditions = logical([]);
     
-    if strcmpi(FileType, 'DPI')
-        if isfield(Expt.Trials,'dfx')
+    if strcmpi(FileType, 'JPI')
+          if isfield(Expt.Trials,'dfx')
             deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
-        else
+            dfxy = [Expt.Trials(:).dfx];
+          else
             deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
-        end
-        tempdelta = fix(deltafxy);
-        for td = 1: length(tempdelta)
+            dfxy = [Expt.Trials(:).dfy];
+          end
+          tempdelta = fix(deltafxy);
+          tempd = fix(dfxy);
+          for td = 1: length(tempdelta)
             if tempdelta(td) == 0
                 tempdelta(td) = 0.5 * sign(deltafxy(td));
             end
-        end
-        deltafxy = tempdelta; % fix(deltafxy);  %  0.2 * fix(5*deltafxy); %0.1 * round(10*deltafxy);
+          end
+          deltafxy = tempdelta;
+          Speeds = unique(abs(deltafxy));
 
+          conditions(1,:) = deltafxy>0;
+          conditions(2,:) = deltafxy<0;
+ 
+          conditions(21,:) = deltafxy>0 & [Expt.Trials(:).jv]==0;
+          conditions(22,:) = deltafxy<0 & [Expt.Trials(:).jv]==0;
+          conditions(23,:) = deltafxy>0 & [Expt.Trials(:).jv]>0;
+          conditions(24,:) = deltafxy<0 & [Expt.Trials(:).jv]>0;
+          conditions(25,:) = deltafxy>0 & [Expt.Trials(:).jv]<0;
+          conditions(26,:) = deltafxy<0 & [Expt.Trials(:).jv]<0;
 
-        Speeds = unique(abs(deltafxy));
-        %disp(length(Speeds));
-        %disp(Speeds);
-       if(Expt.Stimvals.or>0)
-            if(pD==2)
-                conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
-                conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
-                conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
-                conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
-                conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
-                conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
-            else
-                conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
-                conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
-                conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
-                conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
-                conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
-                conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
-            end
-       else
-            if(pD==1)
-                conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
-                conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
-                conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
-                conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
-                conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
-                conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
-            else
-                conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
-                conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
-                conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
-                conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
-                conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
-                conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
-            end
-       end
+    
+    else if strcmpi(FileType, 'DPI')
+      if strcmpi(StimulusType, 'cylinder')
+        [conditions, r2p, r2n, Speeds, deltafxy] = GetConditions(Expt, FileType, pD, prdsDir(iN));
+      else % rds
+%           if isfield(Expt.Trials,'dfx')
+%             deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
+%             dfxy = [Expt.Trials(:).dfx];
+%           else
+%             deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
+%             dfxy = [Expt.Trials(:).dfy];
+%           end
+%           tempdelta = fix(deltafxy);
+%           tempd = fix(dfxy);
+%           for td = 1: length(tempdelta)
+%             if tempdelta(td) == 0
+%                 tempdelta(td) = 0.5 * sign(deltafxy(td));
+%             end
+%           end
+%           deltafxy = tempdelta;
+%           Speeds = unique(abs(deltafxy));
+%             
+           [deltafxy, Speeds] = dpiDeltaFXY(Expt);   
+%           
+%           %Cd(1,:) = (sign([Expt.Trials(:).dx]) == sign(pD(iN)) ) & ());
+%           
+           conditions(1,:) = deltafxy>0;
+           conditions(2,:) = deltafxy<0;
+%  
+%           conditions(21,:) = deltafxy>0 & [Expt.Trials(:).dx]==0;
+%           conditions(22,:) = deltafxy<0 & [Expt.Trials(:).dx]==0;
+%           conditions(23,:) = deltafxy>0 & [Expt.Trials(:).dx]>0;
+%           conditions(24,:) = deltafxy<0 & [Expt.Trials(:).dx]>0;
+%           conditions(25,:) = deltafxy>0 & [Expt.Trials(:).dx]<0;
+%           conditions(26,:) = deltafxy<0 & [Expt.Trials(:).dx]<0;
+    if (isfield(Expt.Trials(1), 'dfx'))
+        pi = [Expt.Trials(:).dfx];
+    else
+        pi = [Expt.Trials(:).dfy];
+    end
+        
+    if ((Expt.Stimvals.or<=180) && (Expt.Stimvals.or>=-180))
+        conditions(20, :) = sign(pi) == sign(Expt.Stimvals.or);
+        conditions(21, :) = sign(pi) ~= sign(Expt.Stimvals.or);
+        
+        conditions(22, :) = (sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0);
+        conditions(23, :) = (sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0);
+        conditions(24, :) = (sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0);
+        conditions(25, :) = (sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0);
+        conditions(26, :) = sign(pi) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+        conditions(27, :) = sign(pi) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+    else
+        conditions(20, :) = sign(pi) ~= sign(Expt.Stimvals.or);
+        conditions(21, :) = sign(pi) == sign(Expt.Stimvals.or);        
+
+        conditions(22, :) = ((sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0));
+        conditions(23, :) = ((sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0));
+        conditions(24, :) = ((sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0));
+        conditions(25, :) = ((sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - prefRDSdx(iN))) & ([Expt.Trials(:).dx]~=0));
+        conditions(26, :) = sign(pi) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+        conditions(27, :) = sign(pi) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+    end
+      end
+% % % % % % % % % % % % % % %  8/18/2011
+%
+%         if isfield(Expt.Trials,'dfx')
+%             deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
+%         else
+%             deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
+%         end
+%         tempdelta = fix(deltafxy);
+%         for td = 1: length(tempdelta)
+%             if tempdelta(td) == 0
+%                 tempdelta(td) = 0.5 * sign(deltafxy(td));
+%             end
+%         end
+%         deltafxy = tempdelta; % fix(deltafxy);  %  0.2 * fix(5*deltafxy); %0.1 * round(10*deltafxy);
+% 
+% 
+%         Speeds = unique(abs(deltafxy));
+%         %disp(length(Speeds));
+%         %disp(Speeds);
+%        if(Expt.Stimvals.or>0)
+%             if(pD==2)
+%                 conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+%                 conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+%                 conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+%                 conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+%                 conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+%                 conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+%             else
+%                 conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+%                 conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+%                 conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+%                 conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+%                 conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+%                 conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+%             end
+%        else
+%             if(pD==1)
+%                 conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+%                 conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+%                 conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+%                 conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+%                 conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+%                 conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+%             else
+%                 conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
+%                 conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
+%                 conditions(3,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+%                 conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+%                 conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+%                 conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+%             end
+%        end
 
     else
       if strcmpi(FileType, 'BDID')
@@ -252,7 +387,7 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         end
     end
     end    
-    
+    end
     if(sum(conditions(1,:))<7 || sum(conditions(2,:))<7)
         disp(strcat(num2str(iN) , ' - ', num2str(NeuronNumber, '%-4.3d') , ' - ', num2str(size([Expt.Trials(:)],1)), ' - TOO LOW TRIAL COUNT - BEWARE ! ! ! ', num2str(sum(conditions(1,:))), ' - ',num2str(sum(conditions(2,:)))));
         toolowFR = 1;
@@ -272,22 +407,55 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
     end
     
-    if (strcmpi(FileType, 'DPI'))
+    if (strfind(['dae510','dae525','','','','','','','','','',], strcat(MonkeyName, num2str(NeuronNumber, '%-04.3d'))))
+        debug = 1;
+    end
+    
+    if (strcmpi(FileType, 'JPI'))
+          dpJPIRDS1(iN) = dPrime(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:)));
+          dpJPIRDS2(iN) = dPrime(SpikeCounts(conditions(21,:)), SpikeCounts(conditions(22,:)));
+          dpJPIRDS3(iN) = dPrime(SpikeCounts(conditions(23,:)), SpikeCounts(conditions(24,:)));
+          dpJPIRDS4(iN) = dPrime(SpikeCounts(conditions(25,:)), SpikeCounts(conditions(26,:)));
+    else if (strcmpi(FileType, 'DPI'))
+      if strcmpi(StimulusType, 'cylinder')
+
         dprs = []; dprsdxp=[]; dprsdxn=[];
         for ss = 1: length(Speeds),
             cs = (abs(deltafxy) == Speeds(ss));
             dprs(ss) = dPrime(SpikeCounts(conditions(1,:) & cs), SpikeCounts(conditions(2,:) & cs));
             dprsdxp(ss) = dPrime(SpikeCounts(conditions(3,:) & cs), SpikeCounts(conditions(4,:) & cs));
-            dprsdxn(ss) = dPrime(SpikeCounts(conditions(6,:) & cs), SpikeCounts(conditions(5,:) & cs));
+            dprsdxn(ss) = dPrime(SpikeCounts(conditions(5,:) & cs), SpikeCounts(conditions(6,:) & cs)); % changed from 6 vs 5 to 5 vs 6 by Ali 8/18/11
         end
         dprs(1+ length(Speeds)) = dPrime(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:)));
         dprsdxp(1+ length(Speeds)) = dPrime(SpikeCounts(conditions(3,:)), SpikeCounts(conditions(4,:)));
-        dprsdxn(1+ length(Speeds)) = dPrime(SpikeCounts(conditions(6,:)), SpikeCounts(conditions(5,:)));
+        dprsdxn(1+ length(Speeds)) = dPrime(SpikeCounts(conditions(5,:)), SpikeCounts(conditions(6,:))); % changed from 6 vs 5 to 5 vs 6 by Ali 8/18/11
 
         dprimes{iN} = [dprs dprsdxp dprsdxn];
-
+        dpdxless(iN)= dPrime(SpikeCounts(conditions(7,:)), SpikeCounts(conditions(8,:)));
+        
+        dpdx(iN)= dPrime(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
+        
+        dppursdir(iN)= dPrime(SpikeCounts(conditions(11,:)), SpikeCounts(conditions(12,:)));
+        
+        PI(iN) = (mean(SpikeCounts(conditions(20,:))) - mean(SpikeCounts(conditions(21,:)))) ./ (mean(SpikeCounts(conditions(20,:))) + mean(SpikeCounts(conditions(21,:))));
+        
+        PIPrefdx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
+        PINulldx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
+        PIZerodx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+        
         NS{iN} = {SpikeCounts, conditions, deltafxy};
- 
+      else
+          dpRDS1(iN) = dPrime(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:)));
+          dpRDS2(iN) = dPrime(SpikeCounts(conditions(21,:)), SpikeCounts(conditions(22,:)));
+          dpRDS3(iN) = dPrime(SpikeCounts(conditions(23,:)), SpikeCounts(conditions(24,:)));
+          dpRDS4(iN) = dPrime(SpikeCounts(conditions(25,:)), SpikeCounts(conditions(26,:)));
+
+          PI(iN) = (mean(SpikeCounts(conditions(20,:))) - mean(SpikeCounts(conditions(21,:)))) ./ (mean(SpikeCounts(conditions(20,:))) + mean(SpikeCounts(conditions(21,:))));
+        
+          PIPrefdx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
+          PINulldx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
+          PIZerodx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+      end
     else
 
     if (strcmpi(FileType, 'BDID'))
@@ -306,24 +474,25 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         [rr, pp] = ROCAUCSignificance(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
         IdBiasROCSig3(iN) = pp;    
         
-        bdCrossTalk(iN) = 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(17,:))) / (sum(conditions(16,:)) + sum(conditions(17,:))) + ...
-                                     (sum(conditions(18,:)) - sum(conditions(19,:))) / (sum(conditions(18,:)) + sum(conditions(19,:))) );
-
-        bdCrossTalk2(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
-                                     (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );
-
-        bdCrossTalk3(iN)= 0.5 *    ( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
-                                     (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );                                 
-
-        bdCrossTalk4(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))))+ ...
-                                abs( (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))));
-                            
-        orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+%         bdCrossTalk(iN) = 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(17,:))) / (sum(conditions(16,:)) + sum(conditions(17,:))) + ...
+%                                      (sum(conditions(18,:)) - sum(conditions(19,:))) / (sum(conditions(18,:)) + sum(conditions(19,:))) );
+% 
+%         bdCrossTalk2(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
+%                                      (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );
+% 
+%         bdCrossTalk3(iN)= 0.5 *    ( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))) + ...
+%                                      (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))) );                                 
+% 
+%         bdCrossTalk4(iN)= 0.5 * abs( (sum(conditions(16,:)) - sum(conditions(19,:))) / (sum(conditions(16,:)) + sum(conditions(19,:))))+ ...
+%                                 abs( (sum(conditions(18,:)) - sum(conditions(17,:))) / (sum(conditions(18,:)) + sum(conditions(17,:))));
+%                             
+        
+        boS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 'bo');
          if (orS(iN)==90)
              c1 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] > 0);
              c2 = ([Expt.Trials(:).Id] > 0) & ([Expt.Trials(:).RespDir] < 0);
              c3 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
-             c4 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
+             c4 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] < 0);
          elseif (orS(iN)==-90)
              c1 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] > 0);
              c2 = ([Expt.Trials(:).Id] < 0) & ([Expt.Trials(:).RespDir] < 0);
@@ -344,8 +513,18 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
              disp(['ORIENTATION IS :  ', num2str(orS(iN)), '  WWHHAATT CCAANN II DDOO == == == == == == == =='])
          end
          bdCrossTalk5(iN) = 0.5 * ( ...
-                            ((sum(c1) - sum(c2)) / (sum(c1) + sum(c2))) + ...
-                            ((sum(c4) - sum(c3)) / (sum(c4) + sum(c3))) );
+                            ((sum(c2) - sum(c1)) / (sum(c1) + sum(c2))) + ...
+                            ((sum(c3) - sum(c4)) / (sum(c4) + sum(c3))) );
+        
+%          bdCrossTalk6(iN) = 0.5 * ( ...
+%                             ((sum(c1) - sum(c2)) / (sum(c1) + sum(c2))) + ...
+%                             ((sum(c3) - sum(c4)) / (sum(c4) + sum(c3))) );
+                        
+        % Neuronal effect of Id for large bd vs small bd trails
+        lbdt = abs([Expt.Trials(:).bd]) == max(abs([Expt.Trials(:).bd]));
+        IdBiasROC2LargebdTrials(iN) = ROCAUC(SpikeCounts(conditions(7,:) & lbdt), SpikeCounts(conditions(8,:) & lbdt));
+        sbdt = abs([Expt.Trials(:).bd]) < 0.01;
+        IdBiasROC2SmallbdTrials(iN) = ROCAUC(SpikeCounts(conditions(7,:) & sbdt), SpikeCounts(conditions(8,:) & sbdt));
         
         % Choice Probability for Id trials
         IdCP1(iN) = ROCAUC(SpikeCounts(conditions(16,:)), SpikeCounts(conditions(17,:)));
@@ -370,9 +549,37 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         Next2ZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(18,:)), SpikeCounts(conditions(19,:)));
         w1 = min(sum(conditions(16,:)),sum(conditions(17,:))); if (w1==0), w1 = max(sum(conditions(16,:)),sum(conditions(17,:))); end
         w2 = min(sum(conditions(18,:)),sum(conditions(19,:))); if (w2==0), w2 = max(sum(conditions(18,:)),sum(conditions(19,:))); end
-        Next2ZeroROCPNWeigh(iN)= ((Next2ZeroROCNull(iN) * w1) + (Next2ZeroROCNull(iN) * w2)) / (w1 + w2);
+        if (Next2ZeroROCPref(iN) == -1)
+            Next2ZeroROCPNWeigh(iN) = Next2ZeroROCNull(iN);
+        else 
+            Next2ZeroROCPNWeigh(iN) = Next2ZeroROCPref(iN);
+        end
+        if ((Next2ZeroROCPref(iN) ~= -1) && (Next2ZeroROCNull(iN) ~= -1))
+            Next2ZeroROCPNWeigh(iN)= ((Next2ZeroROCPref(iN) * w1) + (Next2ZeroROCNull(iN) * w2)) / (w1 + w2);
+        end
+
         orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-            end
+        
+        % Z-scored CP
+        a = zscore(SpikeCounts(conditions(24,:)|conditions(25,:)));
+        b = zscore(SpikeCounts(conditions(26,:)|conditions(27,:)));
+        aa = [a(1 : sum(conditions(24,:))) ; b(1 : sum(conditions(26,:)))];
+        bb = [a(sum(conditions(24,:))+1 : sum(conditions(24,:))+sum(conditions(25,:))) ; b(sum(conditions(26,:))+1 : sum(conditions(26,:))+sum(conditions(27,:)))];
+        CPatZeroROCZScored(iN) = ROCAUC(aa, bb);
+        CPatZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(24,:)), SpikeCounts(conditions(25,:)));
+        CPatZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(26,:)), SpikeCounts(conditions(27,:)));
+        w1 = min(sum(conditions(24,:)),sum(conditions(25,:))); if (w1==0), w1 = max(sum(conditions(24,:)),sum(conditions(25,:))); end
+        w2 = min(sum(conditions(26,:)),sum(conditions(27,:))); if (w2==0), w2 = max(sum(conditions(26,:)),sum(conditions(27,:))); end
+        if (CPatZeroROCPref(iN) == -1)
+            CPatZeroROCPNWeigh(iN) = CPatZeroROCNull(iN);
+        else 
+            CPatZeroROCPNWeigh(iN) = CPatZeroROCPref(iN);
+        end
+        if ((CPatZeroROCPref(iN) ~= -1) && (CPatZeroROCNull(iN) ~= -1))
+            CPatZeroROCPNWeigh(iN)= ((CPatZeroROCPref(iN) * w1) + (CPatZeroROCNull(iN) * w2)) / (w1 + w2);
+        end
+        
+    end
     switch FileType
         case {'TWO', 'BDID'}
             if Expt.Stimvals.bo == Expt.Stimvals.or
@@ -453,10 +660,6 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         end
         end
     end    
-
-    if IdBiasROC1(iN) > 0.7
-        disp( IdBiasROC1(iN));
-        debug = 1;
     end
     if (strcmp(FileType, 'BDID') & abs(Expt.Stimvals.bo - Expt.Stimvals.or)~=90)% & (  Expt.Stimvals.or == 0 | Expt.Stimvals.or == 180 | Expt.Stimvals.or == -180))
         disp('Are you kidding! this is a * TWO Experiment');
@@ -495,45 +698,138 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     else
         DotSizes(iN) = 40;
     end
+    
+    binoc{iN} = Expt.Stimvals.ve;
+end
+
+%%
+if strcmpi(FileType, 'DID')
+    figure(1112), clf, hold on,
+    clickscatter(TI, CPatZeroROCPNWeigh,  8, 8, fileNames);
+    clickscatter(TI, Next2ZeroROCPNWeigh, 7, 8, fileNames);
+    xlabel('Tuning Index');
+    ylabel('CP (Green is CP at zero disparity and \r\nRed is CP right next to zero disparity)');
+    refline(0.0, 0.5);
+    
+    figure(1122), clf, hold on,
+    clickscatter(TI, CPatZeroROCZScored,  8, 8, fileNames);
+    clickscatter(TI, Next2ZeroROCZScored, 7, 8, fileNames);
+    xlabel('Tuning Index');
+    ylabel('CP (Green is CP at zero disparity and \r\nRed is CP right next to zero disparity)');
+    refline(0.0, 0.5);
+    
+    figure(3332), clf, hold on,
+    clickscatter(Next2ZeroROCPNWeigh, CPatZeroROCPNWeigh, 6, 8, fileNames);
+    %clickscatter(Next2ZeroROCPNWeigh(abs(TI)>0.1), CPatZeroROCPNWeigh(abs(TI)>0.1), 5, 8, fileNames(abs(TI)>0.1));
+    xlabel('CP right next to zero disparity');
+    ylabel('CP at zero disparity');
+    refline(0.0, 0.5);
+    reflinexy(0.5, 1);
+    
+    figure(3322), clf, hold on,
+    clickscatter(Next2ZeroROCZScored, CPatZeroROCZScored, 6, 8, fileNames);
+    %clickscatter(Next2ZeroROCZScored(abs(TI)>0.1), CPatZeroROCZScored(abs(TI)>0.1), 5, 8, fileNames(abs(TI)>0.1));
+    xlabel('CP right next to zero disparity');
+    ylabel('CP at zero disparity');
+    refline(0.0, 0.5);
+    reflinexy(0.5, 1);
+    
+    figure(4442), clf, hold on,
+    clickscatter(Next2ZeroROCPNWeigh, Next2ZeroROCZScored, 3, 8, fileNames);
+    %clickscatter(Next2ZeroROCPNWeigh(abs(TI)>0.1), Next2ZeroROCZScored(abs(TI)>0.1), 4, 8, fileNames(abs(TI)>0.1));
+    xlabel('CP right next to zero disparity - Weighted avg');
+    ylabel('CP right next to zero disparity - ZScored');
+    refline(0.0, 0.5);
+    reflinexy(0.5, 1);
+    
+    figure(4422), clf, hold on,
+    clickscatter(CPatZeroROCPNWeigh, CPatZeroROCZScored, 3, 8, fileNames);
+    %clickscatter(CPatZeroROCPNWeigh(abs(TI)>0.1), CPatZeroROCZScored(abs(TI)>0.1), 4, 8, fileNames(abs(TI)>0.1));
+    xlabel('CP at zero disparity - Weighted avg');
+    ylabel('CP at zero disparity - ZScored');
+    refline(0.0, 0.5);
+    reflinexy(0.5, 1);
+  
+    
+end
+
+%% DPI 
+
+if (strcmpi(FileType, 'DPI'))
+    figure(6785), clickscatter(TI, PI, 8, 8, fileNames);
+    xlabel('Tuning Index');
+    ylabel('Pursuit Index (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
+    
+    figure(6755), clf, hold on
+    clickscatter(TI, PIPrefdx, 7, 8, fileNames);
+    clickscatter(TI, PINulldx, 6, 8, fileNames);
+    xlabel('Tuning Index');
+    ylabel('Pursuit Index (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
+    
+    figure(6665), clf, hold on
+    clickscatter(TI, PI, 8, 8, fileNames);
+    clickscatter(TI, PIPrefdx, 7, 8, fileNames);
+    clickscatter(TI, PINulldx, 6, 8, fileNames);
+    xlabel('Tuning Index');
+    ylabel('Pursuit Index (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
+   
+    figure(1357), clf, hold on,
+    bar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))]);
+    errorbar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))], ... 
+             [std(abs(PIPrefdx(~isnan(PIPrefdx))))./sqrt(sum(~isnan(PIPrefdx))), std(abs(PIZerodx(~isnan(PIZerodx))))./sqrt(sum(~isnan(PIZerodx))), std(abs(PINulldx(~isnan(PINulldx))))./sqrt(sum(~isnan(PINulldx))), std(abs(PI(~isnan(PI))))./sqrt(sum(~isnan(PI)))]);
+    
+    [a, b, c] = anova1([abs(PI)', abs(PIPrefdx)', abs(PINulldx)', abs(PIZerodx)']);
+    multcompare(c);
 end
 
 %% crosstalk
-
-figure, hist(bdCrossTalk5(abs(orS)==90))
-hold on , hist(bdCrossTalk5((orS==0) | (abs(orS)==180)))
+if (exist('bdCrossTalk5')==1)
+    if ~strcmpi(FileType, 'DPI') && ~strcmpi(FileType, 'JPI')
+        figure(1819), hist(bdCrossTalk5(abs(orS)==90))
+        hold on , hist(bdCrossTalk5((orS==0) | (abs(orS)==180)))
+    end
+end
 
 %% or
+if ~strcmpi(FileType, 'DPI') && ~strcmpi(FileType, 'JPI')
+    bb = [0 45 90 135 ];
+    for i = 1: length(orS), 
+        switch round(orS(i)) 
+            case {-90, 80, 110, 115}, orSm(i) = 90; 
+            case 180, orSm(i) = 0; 
+            case {-135, -160, 30}, orSm(i) = 45; 
+            case {-30, -45, 120}, orSm(i) = 135; 
+            otherwise orSm(i) = orS(i); 
+        end, 
+    end
+    g = zeros(length(orSm),1);
+    for i = 1: length(bb), g(orSm==bb(i)) = i; end
 
-bb = [0 45 90 135 ];
-for i = 1: length(orS), 
-    switch round(orS(i)) 
-        case {-90, 80, 110, 115}, orSm(i) = 90; 
-        case 180, orSm(i) = 0; 
-        case {-135, -160, 30}, orSm(i) = 45; 
-        case {-30, -45, 120}, orSm(i) = 135; 
-        otherwise orSm(i) = orS(i); 
-    end, 
+    for i = 1:length(bb), m(i) = mean(IdBiasROC1(round(orSm) == round(bb(i)))); end
+    for i = 1:length(bb), e(i) = std(IdBiasROC1(round(orSm) == round(bb(i)))); end
+    figure(856), clf
+    errorbar(bb, m, e)
+    figure(678), scatter(orSm, IdBiasROC1, 'filled')
+    figure(698), scatter(orSm, BiaEff, 'filled')
+
+    [p,table,stats] = anova1(IdBiasROC1(abs(TI)>0.1), g(abs(TI)>0.1))
+    [p,table,stats] = anova1(BiaEff(abs(TI)>0.1), g(abs(TI)>0.1))
+
 end
-g = zeros(length(orSm),1);
-for i = 1: length(bb), g(orSm==bb(i)) = i; end
-
-for i = 1:length(bb), m(i) = mean(IdBiasROC1(round(orSm) == round(bb(i)))); end
-for i = 1:length(bb), e(i) = std(IdBiasROC1(round(orSm) == round(bb(i)))); end
-figure(856), clf
-errorbar(bb, m, e)
-figure(678), scatter(orSm, IdBiasROC1, 'filled')
-figure(698), scatter(orSm, BiaEff, 'filled')
-
-[p,table,stats] = anova1(IdBiasROC1(abs(TI)>0.1), g(abs(TI)>0.1))
-[p,table,stats] = anova1(BiaEff(abs(TI)>0.1), g(abs(TI)>0.1))
-
-
 
 
 %% Graphics
 
-switch(FileType)
-    case 'DPi'
+switch(upper(FileType))
+    case 'JPI'
+          figure(816), clf, clickscatter(TI, dpJPIRDS1, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(826), clf, clickscatter(TI, dpJPIRDS2, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(836), clf, clickscatter(TI, dpJPIRDS3, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(846), clf, clickscatter(TI, dpJPIRDS4, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+
+    case 'DPI'
+      if strcmpi(StimulusType, 'cylinder')
+
         for i = 1: length(dprimes),
             if(~isempty(dprimes{i}))
                 if(~isnan(dprimes{i}(1)))
@@ -544,19 +840,38 @@ switch(FileType)
             end
         end
 
-        figure, clf,
-        clickscatter(TI, dps(:,4)') %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        figure(326), clf,
+        clickscatter(TI, dps(:,4)', 6 + pDs, 8, fileNames);
         refline(0, 0); reflinexy(0,100);
 
         % d prime shift
-        figure, clf,
-        clickscatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))'); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        figure(336), clf,
+        clickscatter(TI, (dps(:,4) - ((dps(:,8) + dps(:,12))./2))', 8, 7, fileNames);
         refline(0, 0); reflinexy(0,100);
         %  normalized d prime shift
-        figure, clf,
+        figure(346), clf,
         scatter(TI, ((dps(:,8) - dps(:,12))./ (dps(:,8) + dps(:,12)))', DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
         refline(0, 0); reflinexy(0,100);
    
+        figure(356), clf,
+        clickscatter(TI, dpdxless, 6 + pDs, 8, fileNames);
+        refline(0, 0); reflinexy(0,100);
+
+        figure(366), clf,
+        clickscatter(TI, dpdx, 6 + pDs, 8, fileNames);
+        refline(0, 0); reflinexy(0,100);
+        
+        % average d prime
+        figure(386), clf,
+        clickscatter(TI, (dps(:,4) + dps(:,8) + dps(:,12))'./3, 8, 7, fileNames);
+        refline(0, 0); reflinexy(0,100);
+        
+      else % rds
+          figure(616), clf, clickscatter(TI, dpRDS1, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(626), clf, clickscatter(TI, dpRDS2, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(636), clf, clickscatter(TI, dpRDS3, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+          figure(646), clf, clickscatter(TI, dpRDS4, 6 + (TI>0), 8, fileNames); refline(0, 0); reflinexy(0,100);
+      end
     case 'BDID'
         figure(1123), clf, hist(IdBiasROC2);
         figure(1145), clf, clickscatter(TI, IdBiasROC2, 1, 7, fileNames); refline(0, 0.5);

@@ -1,4 +1,4 @@
-function [conditions, r2p, r2n] = GetConditions(Expt, FileType, PrefCyldx, PrefrdsDir)
+function [conditions, r2p, r2n, spds, DeltaFXY] = GetConditions(Expt, FileType, PrefCyldx, PrefrdsDir)
 
 ResponseToPositive = 0;
 ResponseToNegative = 0;
@@ -6,24 +6,8 @@ ResponseToNegative = 0;
 conditions = logical([]);
 switch upper(FileType) 
     case 'DPI'
-        if isfield(Expt.Trials,'dfx')
-            deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
-            dfxy = [Expt.Trials(:).dfx];
-        else
-            deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
-            dfxy = [Expt.Trials(:).dfy];
-        end
-        tempdelta = fix(deltafxy);
-        tempd = fix(dfxy);
-        for td = 1: length(tempdelta)
-            if tempdelta(td) == 0
-                tempdelta(td) = 0.5 * sign(deltafxy(td));
-            end
-        end
-        deltafxy = tempdelta; % fix(deltafxy);  %  0.2 * fix(5*deltafxy); %0.1 * round(10*deltafxy);
-        dfxy = tempd;
-        Speeds = unique(abs(deltafxy));
-        if(PrefCyldx==2)
+	[deltafxy, Speeds] = dpiDeltaFXY(Expt); 
+	if(PrefCyldx==2)
            %if((Expt.Stimvals.or>0) && (Expt.Stimvals.or<=180))
             if (sign(PrefrdsDir) == 1)
                conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
@@ -32,6 +16,15 @@ switch upper(FileType)
                conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
                conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
                conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+               
+               conditions(7,:) = (deltafxy>0);
+               conditions(8,:) = (deltafxy<0);
+               % this is the king 8/18/2011 - dPrime(9 vs. 10)
+               % 9/8/11 this is basically the cylinder rolling on its side
+               % on a surface 
+               conditions(9,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+               conditions(10,:)= (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               
             else 
                conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
                conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
@@ -39,16 +32,29 @@ switch upper(FileType)
                conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
                conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
                conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               
+               conditions(7,:) = (deltafxy<0);
+               conditions(8,:) = (deltafxy>0);
+            
+               conditions(9,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+               conditions(10,:)= (deltafxy<0 & [Expt.Trials(:).dx]>0);
             end
         else   
            %if((Expt.Stimvals.or>0) && (Expt.Stimvals.or<=180))
-            if (sign(PrefrdsDir) == 1)
+            if (sign(PrefrdsDir) == 1) % changed back to 1 Ali same day! % changed to -1 Ali 8/18/2011
                conditions(1,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
                conditions(2,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
                conditions(3,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
                conditions(4,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
                conditions(5,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
                conditions(6,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
+
+               conditions(7,:) = (deltafxy>0);
+               conditions(8,:) = (deltafxy<0);
+               
+               conditions(9,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
+               conditions(10,:)= (deltafxy<0 & [Expt.Trials(:).dx]<0);
+
             else 
                conditions(1,:) = (deltafxy<0 & [Expt.Trials(:).dx]==0);
                conditions(2,:) = (deltafxy>0 & [Expt.Trials(:).dx]==0);
@@ -56,11 +62,62 @@ switch upper(FileType)
                conditions(4,:) = (deltafxy>0 & [Expt.Trials(:).dx]>0);
                conditions(5,:) = (deltafxy<0 & [Expt.Trials(:).dx]<0);
                conditions(6,:) = (deltafxy>0 & [Expt.Trials(:).dx]<0);
+               
+               conditions(7,:) = (deltafxy<0);
+               conditions(8,:) = (deltafxy>0);
+               
+               conditions(9,:) = (deltafxy<0 & [Expt.Trials(:).dx]>0);
+               conditions(10,:)= (deltafxy>0 & [Expt.Trials(:).dx]<0);
             end
-        end
+    end
+    % - - - - - - - Lets do it again
+  	conditions(11,:) = (deltafxy>0) & [Expt.Trials(:).dx]==0;
+    conditions(12,:) = (deltafxy<0) & [Expt.Trials(:).dx]==0;
+    if(PrefCyldx==2)
+      	conditions(13,:) = (deltafxy>0) & [Expt.Trials(:).dx]<0;
+        conditions(14,:) = (deltafxy<0) & [Expt.Trials(:).dx]<0;
+      	conditions(15,:) = (deltafxy>0) & [Expt.Trials(:).dx]>0;
+        conditions(16,:) = (deltafxy<0) & [Expt.Trials(:).dx]>0;
+    else
+      	conditions(13,:) = (deltafxy>0) & [Expt.Trials(:).dx]>0;
+        conditions(14,:) = (deltafxy<0) & [Expt.Trials(:).dx]>0;
+      	conditions(15,:) = (deltafxy>0) & [Expt.Trials(:).dx]<0;
+        conditions(16,:) = (deltafxy<0) & [Expt.Trials(:).dx]<0;
+    end
+    
+    if (isfield(Expt.Trials(1), 'dfx'))
+        pi = [Expt.Trials(:).dfx];
+    else
+        pi = [Expt.Trials(:).dfy];
+    end
+        
+    if ((Expt.Stimvals.or<=180) && (Expt.Stimvals.or>=-180))
+        conditions(20, :) = sign(pi) == sign(Expt.Stimvals.or);
+        conditions(21, :) = sign(pi) ~= sign(Expt.Stimvals.or);
+        
+        conditions(22, :) = (sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
+        conditions(23, :) = (sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
+        conditions(24, :) = (sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
+        conditions(25, :) = (sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
+        conditions(26, :) = sign(pi) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+        conditions(27, :) = sign(pi) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+    else
+        conditions(20, :) = sign(pi) ~= sign(Expt.Stimvals.or);
+        conditions(21, :) = sign(pi) == sign(Expt.Stimvals.or);        
+
+        conditions(22, :) = ((sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
+        conditions(23, :) = ((sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
+        conditions(24, :) = ((sign(pi) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
+        conditions(25, :) = ((sign(pi) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
+        conditions(26, :) = sign(pi) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+        conditions(27, :) = sign(pi) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
+    end
+        
+    % = = = = = = = = = = = = = = = = = = = = = 
     case 'DT'
         conditions(1,:) = ones(1, length([Expt.Trials(:)]));
 
+    % = = = = = = = = = = = = = = = = = = = = = 
     case 'FLID'
         if isfield(Expt.Trials, 'sM')
             conditions(1,:) = [Expt.Trials(:).sM]==16; % flat
@@ -69,6 +126,8 @@ switch upper(FileType)
             conditions(1,:) = [Expt.Trials(:).flatsurf]==1;
             conditions(2,:) = [Expt.Trials(:).flatsurf]==0;
         end
+        
+    % = = = = = = = = = = = = = = = = = = = = =
     case'BDID'
         if(mean([Expt.Trials([Expt.Trials(:).Id]>0).RespDir])>0)
             ResponseToPositive = 1;
@@ -241,6 +300,12 @@ switch upper(FileType)
             
             conditions(22,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
             conditions(23,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
+            
+            % 24 - 27 are the the two dx zero disparitis for Z-Scored CP calculation. 
+            conditions(24,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(25,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            conditions(26,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(27,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
 
         else 
             conditions(1,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
@@ -277,6 +342,12 @@ switch upper(FileType)
             conditions(22,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToPositive);
             conditions(23,:)= ([Expt.Trials(:).dx] == 0) & ([Expt.Trials(:).RespDir] == ResponseToNegative);
 
+            % 24 - 27 are the the two dx zero disparitis for Z-Scored CP calculation. 
+            conditions(24,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(25,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            conditions(26,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
+            conditions(27,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToPositive;
+            
         end
     otherwise
         if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
@@ -306,8 +377,11 @@ switch upper(FileType)
             conditions(8,:) = [Expt.Trials(:).dx]== min([Expt.Trials(:).dx]) & [Expt.Trials(:).RespDir]~=0;
         end
 end
-if (nargout==3)
+if (nargout>2)
     r2p = ResponseToPositive;
     r2n = ResponseToNegative;
 end
+if (nargout>3)
+    spds = Speeds;
+    DeltaFXY = deltafxy;
 end

@@ -12,3 +12,11 @@ function [p] = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, Stimu
         or = median([Expt.Trials.or]);
     end
     p = [or];
+    
+    if(~isempty(varargin))
+        if(strcmp(varargin{1},'ve'))
+            p = Expt.Stimvals.ve;
+        else 
+            p = Expt.Stimvals.(varargin{1});
+        end
+    end

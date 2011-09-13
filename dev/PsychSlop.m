@@ -1,6 +1,6 @@
 function [slp] = PsychSlop(NeuronName, StimulusType, ExperimentType, reqparam)
   
-if (nargin>1)
+if (nargin>3)
     %Prep
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronName);
     DataPath = GetDataPath();
@@ -21,8 +21,15 @@ if (nargin>1)
 
 else
     Expt = NeuronName;
-    reqparam = 'dx';
-    ExperimentType = 'DID';
+    if ~(strcmp(StimulusType,''))
+        reqparam = StimulusType;
+        StimulusType = '';
+    else
+        reqparam = 'dx';
+    end
+    if (strcmpi(ExperimentType,''))
+        ExperimentType = 'DID';
+    end
 end
 
 
@@ -69,7 +76,7 @@ end
 %psf = fitpsf(Responses, 'showfit');
 psf = fitpsf(Responses);
 tempResponses = [];
-for i = 1:length(Responses)
+for i = 1:length(psf.data)
     if (psf.data(i).p<0.9 & psf.data(i).p>0.1) 
         sk = length(tempResponses)+1;
         tempResponses(sk).x = Responses(i).x;
