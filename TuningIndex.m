@@ -1,7 +1,9 @@
-function [TI] = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, reqparam)
+function [TI] = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, reqparam, doitsquare)
 % Gets the Tuning Index of the cell  based on the average firing rate  
 
-%Prep
+if doitsquare
+    disp('going SQUARE');
+end
 
 DataPath = GetDataPath();
 
@@ -27,7 +29,7 @@ end
 Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
 Expt = Neuron.Expt;
 
-if(nargin<6)
+if( (nargin<6) || isempty(reqparam))
     if strcmp(FileType,'BDID')
          reqparam = 'Id'; %reqparam = 'dx';
     else
@@ -74,7 +76,11 @@ if (strcmp(FileType, 'BDID')||strcmp(FileType, 'DID'))
 end
 SpikeCounts = zeros(length([Expt.Trials]),1);
 for tr = 1: length([Expt.Trials]), 
-    SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
+    if doitsquare
+        SpikeCounts(tr) = sqrt(sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime));
+    else
+        SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
+    end
 end
 
 eb=[]; cb = [];
