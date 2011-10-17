@@ -78,18 +78,19 @@ TI=[];
 % AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
 % disp('  O N E   M O N K E Y   A T  A  T I M E ');
 
-% THIS IS THE SELECTION OF DRID dx tunied experiemtns
+
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
-for iN= length(AllNeurons):-1:1 %1:length(AllNeurons)
+for iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
-    p = []; c = []; eb = []; jnk1 = []; jnk2 = []; xC =[]; c1 =[]; ebX =[];
+    p = []; c = []; eb = []; jnk1 = []; jnk2 = []; xC =[]; c1 =[]; ebX =[]; 
+    pSacTrig=[]; cSacTrig=[]; ebSacTrig=[]; ebSacTrigMean = [];
     
     switch FileType 
         case {'ABD', 'DID', 'DRID', 'SRID', 'DIDB'} 
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %if (abs(TI(iN))>0.1)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
                 [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
@@ -105,11 +106,10 @@ for iN= length(AllNeurons):-1:1 %1:length(AllNeurons)
         case 'TWO'
             [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-            %[p, c, eb] = PlotPSTHTWO(NeuronNumber, FileType, StimulusType, BinSize, 0);
-            %TI(iN) = TuningIndex(NeuronNumber, ClusterName, StimulusType, FileType, 'dx');
         case 'DPI'
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
     end
     
     %eb = convn(eb, SmthKernel')./ sum(SmthKernel);
@@ -120,8 +120,17 @@ for iN= length(AllNeurons):-1:1 %1:length(AllNeurons)
     else
         [cellValid , vScore] = CellValidity([], FileType, pD, MonkeyName, NeuronNumber, ClusterName, FileType);
     end
-    PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX};
+    
+    
+    for iST = 1: size(ebSacTrig,1),
+        ebSacTrigMean(iST,:) = squeeze(mean(ebSacTrig(iST,squeeze(mean(ebSacTrig(iST,:,:),3))'>0,:)));
+    end
+          
+    ebSacTrig = []; pSacTrig = []; cSacTrig = []; % We dont need these for now
+    PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX, pSacTrig, cSacTrig, ebSacTrig, ebSacTrigMean};
+    
     filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    
     binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
 end
 
@@ -140,15 +149,32 @@ for i = 1 : length(AllNeurons),
         AllConditions(i,:) = sum([PSTHs{i}{2}],2);
         eb = ([PSTHs{i}{3}]);
         pD(i) = ([PSTHs{i}{6}]);
+%         ebSacTrig = ([PSTHs{i}{13}]);
+%         for iST = 1: size(ebSacTrig,1),
+%             ebSacTrigMean(iST,:) = squeeze(mean(ebSacTrig(iST,squeeze(mean(ebSacTrig(iST,:,:),3))'>0,:)));
+%         end
+%         tPSTHSacTrigMean(i, :, :) = ebSacTrigMean;
+%                 
+%         figure(11), clf, hold on,
+%         for tmpi = 1:30,
+%             plot(ebSacTrigMean(tmpi,:)); 
+%         end
+        
+        tPSTHSacTrigMean(i, :, :) = PSTHs{i}{14};
         
         cntr = 0;
         for ebi = 1:size(eb,1)
             cntr = cntr + 1;
             if(sum(eb(ebi,:))>0)
-                tPSTH(i, cntr,1:size(eb(cntr,:),2)) = eb(ebi,:);
+                tPSTH(i, cntr,1:size(eb(cntr,:),2)) = eb(ebi,:);        
                 if(ebi<=size(ebX,1))
                     txCor(i, cntr,1:size(ebX(cntr,:),2))= ebX(ebi,:);
                 end
+                
+                nidp(i,1) = (sum(PSTHs{i}{2}(3,:))); 
+                nidp(i,2) = (sum(PSTHs{i}{2}(4,:)));
+                nidp(i,3) = (sum(PSTHs{i}{2}(5,:))); 
+                nidp(i,4) = (sum(PSTHs{i}{2}(6,:)));
             end
         end
     end
@@ -177,24 +203,21 @@ end
 
 
 %criteria = criteria & ([binoc{:}]>5.07);
-criteria = criteria & (TI<0);
+%criteria = criteria & (TI<0);
 %figure, plot(cumsum(criteria));
 
 %% Graphics 
 
-%PopPSTH = mean(nPSTH);
-%PopPSTH = mean(tPSTH(~isnan(mean(mean(tPSTH,2),3))' ,:,:));
 if strcmp(FileType,'TWO')
-    %PopPSTH = mean(tPSTH(~isnan(mean(mean(tPSTH,2),3))' & (TI>0.1 | TI<-0.1) & validCells,:,:));
-    %PopPSTH = mean(tPSTH(~isnan(mean(mean(tPSTH,2),3))' & (TI>0.1 | TI<-0.1),:,:));
     PopPSTH = mean(tPSTH(criteria,:,:));
 else
-%    PopPSTH = mean(tPSTH(~isnan(mean(mean(tPSTH,2),3))' & (TI>0.1 | TI<-0.1),:,:));
-    %PopPSTH = mean(tPSTH(~isnan(mean(mean(tPSTH,2),3))' & (TI>0.05 | TI<-0.05),:,:));
     PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
     PopPSTHse = std(tPSTH(criteria,:,:))/sqrt(size(tPSTH,1));
     if exist('txCor')
         PopxCor = squeeze(mean(txCor(criteria,:,:)));
+    end
+    if exist('tPSTHSacTrigMean')
+        PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
     end
 end
 
@@ -337,17 +360,95 @@ title(FileType);
 
 sum(criteria)
 
-% a = squeeze(PopPSTH)';
-% %hold on, plot(CumulativeDifference(a(:,1), a(:,2))/100)
-% hold on, 
-% 
-% if strcmp(FileType, 'TWO')
-%     plot(a(:,3) - a(:,4), 'r');
-% else
-%     plot(a(:,1) - a(:,2), 'r:');
-%     plot(a(:,3) - a(:,4), 'r');
-% end
+%%
+switch FileType
+    case 'SRID'
+        figure(642);
+    case 'DRID'
+        figure(643);
+    case 'DID'
+        figure(662);
+    case 'BDID'
+        figure(636);  
+    case 'DPI'
+        figure(688);
+    otherwise
+        figure(625);
+end
+clf, hold on,  
+h = plot(squeeze(PopPSTHSacTrigMean)');
 
+set(h, 'LineWidth', 2);
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);
+
+%errorbar(squeeze(PopPSTH)', squeeze(PopPSTHse)');
+
+sum(criteria)
+
+%%
+
+mtn = 5; % minimum number of trials required
+ng = []; SDFa1 = []; SDFa2 = []; SDFa3 = []; SDFb1 = []; SDFb2 = []; SDFb3 = []; SDF4_1 = []; SDF4_2 = [];
+for i = 1:length(PSTHs)
+    cnd1 = ((nidp(i,1)>=mtn) && (nidp(i,3)>=mtn));
+    cnd2 = ((nidp(i,2)>=mtn) && (nidp(i,4)>=mtn));
+    if ~(cnd1 || cnd2), 
+        disp([num2str(i) AllNeurons(i)]);
+        ng(i) = 1;
+        SDF4_1 = [SDF4_1; squeeze(tPSTH(i,1,:))']; % Id pref
+        SDF4_2 = [SDF4_2; squeeze(tPSTH(i,2,:))']; % Id null
+    else if (cnd1 && cnd2), 
+            ng(i) = 4;
+            SDFa1 = [SDFa1; squeeze(tPSTH(i,3,:))']; %correct pref
+            SDFa2 = [SDFa2; squeeze(tPSTH(i,4,:))']; %correct null
+            SDFa3 = [SDFa3; squeeze(tPSTH(i,5,:))']; %wrong pref
+
+            SDFb1 = [SDFb1; squeeze(tPSTH(i,3,:))']; %correct pref
+            SDFb2 = [SDFb2; squeeze(tPSTH(i,4,:))']; %correct null
+            SDFb3 = [SDFb3; squeeze(tPSTH(i,6,:))']; %wrong null
+
+        else if (cnd1 && ~cnd2)
+            ng(i) = 2;
+            SDFa1 = [SDFa1; squeeze(tPSTH(i,3,:))']; %correct pref
+            SDFa2 = [SDFa2; squeeze(tPSTH(i,4,:))']; %correct null
+            SDFa3 = [SDFa3; squeeze(tPSTH(i,5,:))']; %wrong pref
+   
+            else
+                ng(i) = 3;
+                SDFb1 = [SDFb1; squeeze(tPSTH(i,3,:))']; %correct pref
+                SDFb2 = [SDFb2; squeeze(tPSTH(i,4,:))']; %correct null
+                SDFb3 = [SDFb3; squeeze(tPSTH(i,6,:))']; %wrong null
+                
+            end
+        end
+        
+    end
+end
+
+
+figure(876), hist(ng);
+%%
+
+figure(888); clf, hold on,
+plot(mean([SDFa1; SDFb1])', 'r', 'LineWidth', 2);
+plot(mean([SDFa2; SDFb2])', 'b', 'LineWidth', 2);
+plot(mean(SDFa3)', 'm', 'LineWidth', 2);
+plot(mean(SDFb3)', 'c', 'LineWidth', 2);
+plot(mean(SDF4_1)', 'k');
+plot(mean(SDF4_2)', 'k');
+
+set(gca, 'XGrid', 'on');
+xlim([100 2200]);
+xtl = [0, 50, 500, 1000, 1500, 2000];
+set(gca, 'XTick', xtl+200-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+title(FileType);
 
 
 %% Sliding Delta

@@ -3,11 +3,11 @@ clear, clc
 DataPath = GetDataPath();
 
 % % % % Eye Calib
-load('../AllEyeCallExpts.mat');
-AllNeurons = AllEyeCallExpts;
-clear AllEyeCallExpts;
-FileType = 'EyeCal';
-StimulusType = '';
+% load('../AllEyeCallExpts.mat');
+% AllNeurons = AllEyeCallExpts;
+% clear AllEyeCallExpts;
+% FileType = 'EyeCal';
+% StimulusType = '';
 
 
 % ABD
@@ -31,10 +31,15 @@ StimulusType = '';
 % FileType = 'TWO';
 % StimulusType = 'cylinder';
 
-
+% % % DPI
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
 
 %par
-for iN= 1:length(AllNeurons), 
+parfor iN= 1:length(AllNeurons), 
     Expt = [];
     NeuronNumber = AllNeurons(iN);
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronNumber); 
