@@ -136,8 +136,8 @@ if ~isempty(x),
     % add the line to the current axes
     np = get(hca,'nextplot') ;
     set(hca,'nextplot','add') ;
-    hxy(1) = line('xdata',xx1(:),'ydata',yy1(:),'linestyle',':','color','k') ; % draw vertical lines
-    hxy(2) = line('xdata',xx2(:),'ydata',yy2(:),'linestyle',':','color','k') ; % draw horizontal lines         
+    hxy(1) = line('xdata',xx1(:),'ydata',yy1(:),'linestyle','-','color','k') ; % draw vertical lines
+    hxy(2) = line('xdata',xx2(:),'ydata',yy2(:),'linestyle','-','color','k') ; % draw horizontal lines         
     
     uistack(hxy(:),'bottom') ; % push lines to the bottom of the graph
     

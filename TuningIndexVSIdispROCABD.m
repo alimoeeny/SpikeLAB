@@ -9,7 +9,7 @@ cd /Users/moeenya/Dropbox/Projects/SpikeLAB/dev
 DataPath = GetDataPath();
 
 FinishTime = 0;
-doitsquare = 1;
+doitsquare = 0;
 
 % ABD
 % load /Users/ali/DropBox/Projects/BCode/AllABDNeurons.mat
@@ -22,13 +22,13 @@ doitsquare = 1;
 % FinishTime = 20000;
 
 % % % DID
-load ../AllDIDNeurons.mat
-AllNeurons = AllDIDNeurons;
-clear AllDIDNeurons
-FileType = 'DID';
-StimulusType = 'cylinder';
-StartTime  = 10000; %10000; % 6500; 
-FinishTime = 20000;
+% load ../AllDIDNeurons.mat
+% AllNeurons = AllDIDNeurons;
+% clear AllDIDNeurons
+% FileType = 'DID';
+% StimulusType = 'cylinder';
+% StartTime  = 10000; %10000; % 6500; 
+% FinishTime = 20000;
 
 
 % % % DIDB
@@ -51,13 +51,13 @@ FinishTime = 20000;
 % FinishTime = 20000;
 
 % % DPI Cylinder
-% load('../AllPursuitNeurons.mat');
-% AllNeurons = AllPursuitNeurons;
-% clear AllPursuitNeurons;
-% FileType = 'DPI';
-% StimulusType = 'cylinder';
-% StartTime  = 500;% 10000; %500; %10000; 
-% FinishTime = 20000;
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
+StartTime  = 500;% 10000; %500; %10000; 
+FinishTime = 20000;
 
 
 % % DPI rds
@@ -105,8 +105,8 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     toolowFR = 0;
     NeuronNumber = AllNeurons(iN);
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronNumber); 
-    TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], doitsquare);
-    TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT', [], doitsquare);
+    TI(iN)      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], doitsquare);
+    TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], doitsquare);
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d'), ' - ' , MonkeyName));
     
     filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
@@ -319,14 +319,31 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         
         dpdx(iN)= dPrime(SpikeCounts(conditions(9,:)), SpikeCounts(conditions(10,:)));
         
-        dppursdir(iN)= dPrime(SpikeCounts(conditions(11,:)), SpikeCounts(conditions(12,:)));
+%        dppursdir(iN)= dPrime(SpikeCounts(conditions(11,:)), SpikeCounts(conditions(12,:)));
         
-        PI(iN) = (mean(SpikeCounts(conditions(20,:))) - mean(SpikeCounts(conditions(21,:)))) ./ (mean(SpikeCounts(conditions(20,:))) + mean(SpikeCounts(conditions(21,:))));
         
-        PIPrefdx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
-        PINulldx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
-        PIZerodx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+        PIFast(iN) = (mean(SpikeCounts(conditions(11,:))) - mean(SpikeCounts(conditions(12,:)))) ./ (mean(SpikeCounts(conditions(11,:))) + mean(SpikeCounts(conditions(12,:))));
+        PISlow(iN) = (mean(SpikeCounts(conditions(21,:))) - mean(SpikeCounts(conditions(22,:)))) ./ (mean(SpikeCounts(conditions(21,:))) + mean(SpikeCounts(conditions(22,:))));
+        PIMid(iN)  = (mean(SpikeCounts(conditions(31,:))) - mean(SpikeCounts(conditions(32,:)))) ./ (mean(SpikeCounts(conditions(31,:))) + mean(SpikeCounts(conditions(32,:))));
         
+        PIOld(iN)  = (mean(SpikeCounts(conditions(7,:))) - mean(SpikeCounts(conditions(8,:)))) ./ (mean(SpikeCounts(conditions(7,:))) + mean(SpikeCounts(conditions(8,:))));
+        PIOldZ(iN) = (mean(SpikeCounts(conditions(1,:))) - mean(SpikeCounts(conditions(2,:)))) ./ (mean(SpikeCounts(conditions(1,:))) + mean(SpikeCounts(conditions(2,:))));
+        PIOldP(iN) = (mean(SpikeCounts(conditions(3,:))) - mean(SpikeCounts(conditions(4,:)))) ./ (mean(SpikeCounts(conditions(3,:))) + mean(SpikeCounts(conditions(4,:))));
+        PIOldN(iN) = (mean(SpikeCounts(conditions(5,:))) - mean(SpikeCounts(conditions(6,:)))) ./ (mean(SpikeCounts(conditions(5,:))) + mean(SpikeCounts(conditions(6,:))));
+        PI(iN) = (mean(SpikeCounts(conditions(1,:) | conditions(3,:) | conditions(5,:))) ...
+                - mean(SpikeCounts(conditions(2,:) | conditions(4,:) | conditions(6,:)))) ./ ...
+                 (mean(SpikeCounts(conditions(1,:) | conditions(3,:) | conditions(5,:))) ...
+                + mean(SpikeCounts(conditions(2,:) | conditions(4,:) | conditions(6,:))));
+%         PIZero(iN)= (mean(SpikeCounts(conditions(11,:))) - mean(SpikeCounts(conditions(12,:)))) ./ (mean(SpikeCounts(conditions(11,:))) + mean(SpikeCounts(conditions(12,:))));
+%         PIPref(iN)= (mean(SpikeCounts(conditions(13,:))) - mean(SpikeCounts(conditions(14,:)))) ./ (mean(SpikeCounts(conditions(13,:))) + mean(SpikeCounts(conditions(14,:))));
+%         PINull(iN)= (mean(SpikeCounts(conditions(15,:))) - mean(SpikeCounts(conditions(16,:)))) ./ (mean(SpikeCounts(conditions(15,:))) + mean(SpikeCounts(conditions(16,:))));
+%         PI(iN) = mean([PIZero(iN), PIPref(iN), PINull(iN)]);
+%         
+%         PIZerodx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
+%         PIPrefdx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
+%         PINulldx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+%         PINew(iN) = mean([PIZerodx(iN), PIPrefdx(iN), PINulldx(iN)]);
+
         NS{iN} = {SpikeCounts, conditions, deltafxy};
       else
           dpRDS1(iN) = dPrime(SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:)));
@@ -334,11 +351,20 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
           dpRDS3(iN) = dPrime(SpikeCounts(conditions(23,:)), SpikeCounts(conditions(24,:)));
           dpRDS4(iN) = dPrime(SpikeCounts(conditions(25,:)), SpikeCounts(conditions(26,:)));
 
-          PI(iN) = (mean(SpikeCounts(conditions(20,:))) - mean(SpikeCounts(conditions(21,:)))) ./ (mean(SpikeCounts(conditions(20,:))) + mean(SpikeCounts(conditions(21,:))));
-        
-          PIPrefdx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
-          PINulldx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
-          PIZerodx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+%           PIOld(iN) = (mean(SpikeCounts(conditions(7,:))) - mean(SpikeCounts(conditions(8,:)))) ./ (mean(SpikeCounts(conditions(7,:))) + mean(SpikeCounts(conditions(8,:))));
+%         PIOldZ(iN) = (mean(SpikeCounts(conditions(1,:))) - mean(SpikeCounts(conditions(2,:)))) ./ (mean(SpikeCounts(conditions(1,:))) + mean(SpikeCounts(conditions(2,:))));
+%         PIOldP(iN) = (mean(SpikeCounts(conditions(3,:))) - mean(SpikeCounts(conditions(4,:)))) ./ (mean(SpikeCounts(conditions(3,:))) + mean(SpikeCounts(conditions(4,:))));
+%         PIOldN(iN) = (mean(SpikeCounts(conditions(5,:))) - mean(SpikeCounts(conditions(6,:)))) ./ (mean(SpikeCounts(conditions(5,:))) + mean(SpikeCounts(conditions(6,:))));
+% 
+%         PIZero(iN)= (mean(SpikeCounts(conditions(1,:))) - mean(SpikeCounts(conditions(2,:)))) ./ (mean(SpikeCounts(conditions(1,:))) + mean(SpikeCounts(conditions(2,:))));
+%           PIPref(iN)= (mean(SpikeCounts(conditions(3,:))) - mean(SpikeCounts(conditions(4,:)))) ./ (mean(SpikeCounts(conditions(3,:))) + mean(SpikeCounts(conditions(4,:))));
+%           PINull(iN)= (mean(SpikeCounts(conditions(5,:))) - mean(SpikeCounts(conditions(6,:)))) ./ (mean(SpikeCounts(conditions(5,:))) + mean(SpikeCounts(conditions(6,:))));
+%           PI(iN) = mean([PIZero(iN), PIPref(iN), PINull(iN)]);
+%           
+%           PIZerodx(iN) = (mean(SpikeCounts(conditions(22,:))) - mean(SpikeCounts(conditions(23,:)))) ./ (mean(SpikeCounts(conditions(22,:))) + mean(SpikeCounts(conditions(23,:))));
+%           PIPrefdx(iN) = (mean(SpikeCounts(conditions(24,:))) - mean(SpikeCounts(conditions(25,:)))) ./ (mean(SpikeCounts(conditions(24,:))) + mean(SpikeCounts(conditions(25,:))));
+%           PINulldx(iN) = (mean(SpikeCounts(conditions(26,:))) - mean(SpikeCounts(conditions(27,:)))) ./ (mean(SpikeCounts(conditions(26,:))) + mean(SpikeCounts(conditions(27,:))));
+%           PINew(iN) = mean([PIZerodx(iN), PIPrefdx(iN), PINulldx(iN)]);
       end
     else
 
@@ -687,7 +713,7 @@ end
 %% DPI 
 
 if (strcmpi(FileType, 'DPI'))
-    figure(6785), clickscatter(TI, PI, 8, 8, fileNames);
+    figure(6785), clf, clickscatter(TIcyldx, PI, 6, 7, fileNames);
     xlabel('Tuning Index');
     ylabel('Pursuit Index : (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
     
@@ -698,25 +724,62 @@ if (strcmpi(FileType, 'DPI'))
     ylabel('Pursuit Index : (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
     
     figure(6665), clf, hold on
-    clickscatter(TI, PI, 8, 8, fileNames);
+    clickscatter(TI, PINew, 8, 8, fileNames);
     clickscatter(TI, PIPrefdx, 7, 8, fileNames);
     clickscatter(TI, PINulldx, 6, 8, fileNames);
     xlabel('Tuning Index');
     ylabel('Pursuit Index : (Fr(pref) - Fr(null) / Fr(pref) + Fr(null))');
    
     figure(1982), clf, hold on, 
-    clickscatter(abs(TI), abs(PI), 8, 8, fileNames);
-    clickscatter(abs(TI(abs(TI)>0.1)), abs(PI(abs(TI)>0.1)), 6, 8, fileNames(abs(TI)>0.1));
+    clickscatter(abs(TI), abs(PINew), 8, 8, fileNames);
+    clickscatter(abs(TI(abs(TI)>0.1)), abs(PINew(abs(TI)>0.1)), 6, 8, fileNames(abs(TI)>0.1));
     xlabel('ABS( Tuning Index )');
     ylabel('ABS( Pursuit Index) : ABS((Fr(pref) - Fr(null) / Fr(pref) + Fr(null)) )');
     
+
+%%
     figure(1357), clf, hold on,
-    bar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))]);
-    errorbar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))], ... 
-             [std(abs(PIPrefdx(~isnan(PIPrefdx))))./sqrt(sum(~isnan(PIPrefdx))), std(abs(PIZerodx(~isnan(PIZerodx))))./sqrt(sum(~isnan(PIZerodx))), std(abs(PINulldx(~isnan(PINulldx))))./sqrt(sum(~isnan(PINulldx))), std(abs(PI(~isnan(PI))))./sqrt(sum(~isnan(PI)))]);
+%     bar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))]);
+%     errorbar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))], ... 
+%              [std(abs(PIPrefdx(~isnan(PIPrefdx))))./sqrt(sum(~isnan(PIPrefdx))), std(abs(PIZerodx(~isnan(PIZerodx))))./sqrt(sum(~isnan(PIZerodx))), std(abs(PINulldx(~isnan(PINulldx))))./sqrt(sum(~isnan(PINulldx))), std(abs(PI(~isnan(PI))))./sqrt(sum(~isnan(PI)))]);
+%     
+%     [a, b, c] = anova1([abs(PI)', abs(PIPrefdx)', abs(PINulldx)', abs(PIZerodx)']);
+    PiP = PIPrefdx .* (TI > 0) - PIPrefdx .* (TI < 0);
+    PiN = PINulldx .* (TI > 0) - PINulldx .* (TI < 0);
+    PiZ = PIZerodx .* (TI > 0) - PIZerodx .* (TI < 0);
+    PiA = PINew    .* (TI > 0) - PINew    .* (TI < 0);
     
-    [a, b, c] = anova1([abs(PI)', abs(PIPrefdx)', abs(PINulldx)', abs(PIZerodx)']);
+    bar([mean(abs(PiP(~isnan(PiP)))), ...
+         mean(abs(PiZ(~isnan(PiZ)))), ...
+         mean(abs(PiN(~isnan(PiN)))), ...
+         mean(abs(PiA(~isnan(PiA)))), ...
+         mean(abs(PiA(~isnan(PiA) & abs(TI)<0.1)))]);
+    errorbar([mean(abs(PiP(~isnan(PiP)))), ...
+              mean(abs(PiZ(~isnan(PiZ)))), ...
+              mean(abs(PiN(~isnan(PiN)))), ...
+              mean(abs(PiA(~isnan(PiA)))), ...
+              mean(abs(PiA(~isnan(PiA) & abs(TI)<0.1)))], ... 
+             [std(abs(PiP(~isnan(PiP))))./sqrt(sum(~isnan(PiP))), ...
+              std(abs(PiZ(~isnan(PiZ))))./sqrt(sum(~isnan(PiZ))), ...
+              std(abs(PiN(~isnan(PiN))))./sqrt(sum(~isnan(PiN))), ...
+              std(abs(PiA(~isnan(PiA))))./sqrt(sum(~isnan(PiA))), ...
+              std(abs(PiA(~isnan(PiA) & abs(TI)<0.1)))./sqrt(sum(~isnan(PiA) & abs(TI)<0.1))]);
+    
+    [a, b, c] = anova1([abs(PiP)', abs(PiZ)', abs(PiN)', abs(PiA)']);
     multcompare(c);
+    
+%%
+PISliding = [];
+TIs = sort(TI);
+for slide=1:length(TI)-10
+    PISliding(slide) = mean(PiA((TI>=TIs(slide)) & (TI<TIs(slide+10))));
+end
+
+figure(1999), clf, hold on
+plot(TIs(1:end-10),PISliding);
+refline(0,0);
+reflinexy(0,1);
+
 end
 
 %% crosstalk

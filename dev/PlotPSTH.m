@@ -38,6 +38,11 @@ end
 
 conditions = GetConditions(Expt, FileType, pD, rdsPrefDir);
 
+SmoothingBinSize = 50;%50
+SmthKernel = gausswin(SmoothingBinSize);
+% make it causal
+%SmthKernel(SmoothingBinSize/2+1:end) = 0;
+
 StartTime = -2000; %1; %5500;
 if(isfield(Expt.Trials, 'dur'))
     FinishTime = round(median([Expt.Trials(:).dur])) + 500;
@@ -46,6 +51,7 @@ else
 end
 
 PSTH = zeros(length([Expt.Trials]), round((FinishTime - StartTime + 1)/10));
+%par
 parfor tr = 1: size(PSTH,1),
     psth = [];
     for tt = 1:size(PSTH,2),
@@ -54,6 +60,7 @@ parfor tr = 1: size(PSTH,1),
 %     if Cumulative == 1
 %         PSTH(tr,:) = cumsum(PSTH(tr,:));
 %     end
+    psth = conv(psth, SmthKernel, 'same') ./ sum(SmthKernel);        
     psths{tr} = psth;
 end
 for tr = 1: size(PSTH,1),

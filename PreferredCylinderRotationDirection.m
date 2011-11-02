@@ -63,7 +63,7 @@ else
 
     if(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename),'file')~=2)
         pd = -1;
-        disp('FILE NOT FOUND - THERE IS A PROBLEM HERE! ! !');
+        disp(['FILE NOT FOUND - THERE IS A PROBLEM HERE! ! !', strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)]);
         return;
     end
 

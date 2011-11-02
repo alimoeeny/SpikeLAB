@@ -32,11 +32,19 @@ DataPath = GetDataPath();
 % StimulusType = 'cylinder';
 
 % % % DPI
-load('../AllPursuitNeurons.mat');
-AllNeurons = AllPursuitNeurons;
-clear AllPursuitNeurons;
+% load('../AllPursuitNeurons.mat');
+% AllNeurons = AllPursuitNeurons;
+% clear AllPursuitNeurons;
+% FileType = 'DPI';
+% StimulusType = 'cylinder';
+
+% % DPI rds
+load('../AllPursuitNeuronsrds.mat');
+AllNeurons = AllPursuitNeuronsrds;
+clear AllPursuitNeuronsrds;
 FileType = 'DPI';
-StimulusType = 'cylinder';
+StimulusType = 'rds';
+
 
 %par
 parfor iN= 1:length(AllNeurons), 

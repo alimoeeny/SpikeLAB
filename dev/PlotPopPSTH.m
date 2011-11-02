@@ -62,14 +62,25 @@ AllNeurons = AllPursuitNeurons;
 clear AllPursuitNeurons;
 FileType = 'DPI';
 StimulusType = 'cylinder';
-% % % % %%%StartTime  = 500;% 10000; %500; %10000; 
-% % % % %%%FinishTime = 20000;
+% % % %%%StartTime  = 500;% 10000; %500; %10000; 
+% % % %%%FinishTime = 20000;
+
+% % DPI rds
+% load('../AllPursuitNeuronsrds.mat');
+% AllNeurons = AllPursuitNeuronsrds;
+% clear AllPursuitNeuronsrds;
+% FileType = 'DPI';
+% StimulusType = 'rds';
+% % StartTime  = 500;% 10000; %500; %10000; 
+% % FinishTime = 20000;
+
 
 %Prep
 DataPath = GetDataPath();
-BinSize = 50;%50;
+BinSize = 1;%50;
 SmoothingBinSize = 1;%50
 SmthKernel = gausswin(SmoothingBinSize);
+
 
 filenamesforbruce = {};
 TI=[];
@@ -81,7 +92,7 @@ TI=[];
 
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 %par
-for iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
+parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
@@ -110,12 +121,16 @@ for iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            
+            PIS(iN,:) = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType);
+            dxEffectPeak(iN) = dxEffectMax(MonkeyName, NeuronNumber, ClusterName, 'rds');
+            
     end
     
     %eb = convn(eb, SmthKernel')./ sum(SmthKernel);
     pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
     orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID'))
+    if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID') || ((strcmpi(FileType, 'DPI')) && (strcmpi(StimulusType, 'rds'))))
         cellValid  = 1; vScore = 1;
     else
         [cellValid , vScore] = CellValidity([], FileType, pD, MonkeyName, NeuronNumber, ClusterName, FileType);
@@ -139,6 +154,9 @@ validCells = []; for i = 1: length(PSTHs), if~isempty(PSTHs{i}), validCells(i) =
 AllConditions = [];
 
 for i = 1 : length(AllNeurons),
+    if (~isempty(PSTHs{i}) && ~isempty(PSTHs{i}{14}))
+        tPSTHSacTrigMean(i, :, :) = PSTHs{i}{14};
+    end
     if (~isempty(PSTHs{i}) && ~isempty(PSTHs{i}{1}))
         if ~isempty(PSTHs{i}{7}), rocs(i,:) = PSTHs{i}{7}; end
         if ~isempty(PSTHs{i}{8}), DandC(i,:,1:2100) = PSTHs{i}{8}(:,1:2100); end
@@ -206,8 +224,43 @@ end
 %criteria = criteria & (TI<0);
 %figure, plot(cumsum(criteria));
 
-%% Graphics 
+%% 
 
+% for n = 1:length(PIS)
+%   disp(orS(n));
+%   if ((orS(n)>0) & (orS(n)<=180)) 
+%     if TI(n)>0 
+%         % we are good
+%     else
+%         tmp = PIS(n, 2); PIS(n, 2) = PIS(n,3); PIS(n, 3) = tmp;
+%         tmp = PIS(n, 5); PIS(n, 5) = PIS(n,6); PIS(n, 6) = tmp;
+%         tmp = PIS(n, 8); PIS(n, 8) = PIS(n,9); PIS(n, 9) = tmp;
+%     end
+%   else
+%     PIS(n,:) = - PIS(n,:);
+%     if TI(n)>0 
+%         % we are good
+%     else
+%         tmp = PIS(n, 2); PIS(n, 2) = PIS(n,3); PIS(n, 3) = tmp;
+%         tmp = PIS(n, 5); PIS(n, 5) = PIS(n,6); PIS(n, 6) = tmp;
+%         tmp = PIS(n, 8); PIS(n, 8) = PIS(n,9); PIS(n, 9) = tmp;
+%     end
+%   end
+% end
+
+% JUNK figure(1919), scatter(PIS(:,1) ./ PIS(:,7), PIS(:,4) ./ PIS(:,7), 'filled'); refline(1), refline(0,0), reflinexy(10,1), reflinexy(1,10), reflinexy(0,10);
+
+figure(1919), scatter(PIS(:,1) ./ PIS(:,7), PIS(:,4) ./ PIS(:,7), 'filled'); refline(1), refline(0,0), reflinexy(10,1), reflinexy(1,10), reflinexy(0,10);
+figure(1918), scatter(PIS(:,11) ./ PIS(:,13), PIS(:,12) ./ PIS(:,13), 'filled'); refline(1), refline(0,0), reflinexy(10,1), reflinexy(1,10), reflinexy(0,10);
+figure(1215), clickscatter(PIS(:,15), dxEffectPeak, 6, 6, filenamesforbruce ); refline(1)
+
+%%
+figure(1920), clf, hold on,
+scatter(PIS(:,11), PIS(:,12), 'filled'); 
+scatter(PIS(:,11), PIS(:,13), 'filled'); 
+refline(1), refline(0,0), reflinexy(10,1), reflinexy(1,10), reflinexy(0,10);
+
+%%
 if strcmp(FileType,'TWO')
     PopPSTH = mean(tPSTH(criteria,:,:));
 else
@@ -216,11 +269,12 @@ else
     if exist('txCor')
         PopxCor = squeeze(mean(txCor(criteria,:,:)));
     end
-    if exist('tPSTHSacTrigMean')
-        PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
-    end
 end
 
+%%
+if exist('tPSTHSacTrigMean')
+        PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
+end
 
 
 %%
@@ -371,7 +425,7 @@ switch FileType
     case 'BDID'
         figure(636);  
     case 'DPI'
-        figure(688);
+        figure(689);
     otherwise
         figure(625);
 end

@@ -38,45 +38,58 @@ end
 
 conditions = GetConditions(Expt, FileType, pD, rdsPrefDir);
 
+SmoothingBinSize = 50;%50
+SmthKernel = gausswin(SmoothingBinSize);
+SmthKernel(SmoothingBinSize/2+1:end) = 0;
+
 TrialLength = 500;
 preSaccadeInterval = 100;
+StartOffset = 500;
 
 PSTHSacTrig = num2cell(zeros(length([Expt.Trials]),1));
+PSTHSacTrigR= num2cell(zeros(length([Expt.Trials]),1));
+shufTrials = randperm(length([Expt.Trials]));
 %par
 for tr = 1: length([Expt.Trials]),
     psth = [];
+    scounter = 0;
     for sc = 1: length([Expt.Trials(tr).Saccades])
-        if (Expt.Trials(tr).Saccades(sc).start + TrialLength * 10 < Expt.Trials(tr).End)
+        if ((Expt.Trials(tr).Saccades(sc).start > StartOffset * 10) && (Expt.Trials(tr).Saccades(sc).start + TrialLength * 10 < Expt.Trials(tr).End))
+            scounter = scounter + 1;
             for tt = 1:TrialLength,
                 psth(tt) = sum([Expt.Trials(tr).Spikes]>=(tt*10 + Expt.Trials(tr).Saccades(sc).start - preSaccadeInterval * 10) & [Expt.Trials(tr).Spikes]<=(tt*10 + Expt.Trials(tr).Saccades(sc).start + BinSize*10 - preSaccadeInterval * 10)) * 1000 / BinSize;
             end
+            psth = conv(psth, SmthKernel, 'same') ./ sum(SmthKernel);        
+            PSTHSacTrig{tr, scounter} = psth;
+            PSTHSacTrigR{shufTrials(tr), scounter} = psth;
         end
-        PSTHSacTrig{tr, sc} = psth;
     end
 end
 
 eb = zeros(size(conditions,1), 0, TrialLength);
+ebR = zeros(size(conditions,1), 0, TrialLength);
 for cc = 1: size(conditions,1)
     for cndc = 1: size(conditions(cc,:),2),
         if (conditions(cc, cndc))
             for sc = 1 : size(PSTHSacTrig{cndc},1)
                 eb(cc, size(eb,2) + 1, :) = mean(PSTHSacTrig{cndc}(sc, :),1);
+                ebR(cc, size(ebR,2) + 1, :) = mean(PSTHSacTrigR{cndc}(sc, :),1);
             end
         end
     end
 end
 
-ebm = zeros(size(eb,1), size(eb,3));
-for i = 1 : size(eb,1),
-    c = 0;
-    for j = 1 : size(eb,2),
-        ebm(i,:) = ebm(i,:) + squeeze(eb(i,j, :))';
-        c = c + 1;
-    end
-    if (c>0)
-        ebm(i,:) = ebm(i,:) ./ c;
-    end
-end
+% ebm = zeros(size(eb,1), size(eb,3));
+% for i = 1 : size(eb,1),
+%     c = 0;
+%     for j = 1 : size(eb,2),
+%         ebm(i,:) = ebm(i,:) + squeeze(eb(i,j, :))';
+%         c = c + 1;
+%     end
+%     if (c>0)
+%         ebm(i,:) = ebm(i,:) ./ c;
+%     end
+% end
 
 
 if strcmpi(FileType, 'DID')
@@ -178,6 +191,12 @@ switch FileType
         eb(size(eb,1)+1, :) = eb(1,:) - eb(2,:);
         eb(size(eb,1)+1, :) = eb(3,:) - eb(4,:);
         eb(size(eb,1)+1, :) = eb(5,:) - eb(6,:);
+
+        ebR(size(ebR,1)+1, :) = ebR(1,:) - ebR(2,:);
+        ebR(size(ebR,1)+1, :) = ebR(3,:) - ebR(4,:);
+        ebR(size(ebR,1)+1, :) = ebR(5,:) - ebR(6,:);
+        
+        %eb = [eb ; ebR];
 end
 
 warning off
@@ -200,7 +219,7 @@ if(PlotIt)
             legend(h, GetLegends(FileType));
             %legend('Pref bd Pref Id', 'Pref bd null Id', 'Pref bd pref Id and correct response', 'Pref bd Pref Id wrong response', 'null bd null Id correct response', 'null bd null Id wrong response', 'Preff Id', 'Null Id');
         case 'DPI'
-            figure(16919), h = plot(eb');
+            figure(15121), h = plot(squeeze(mean(eb,2))');
             legend(h, GetLegends(FileType));
             refline(0);
         otherwise
@@ -210,10 +229,10 @@ if(PlotIt)
     set(h, 'LineWidth', 2);
 
     set(gca, 'XGrid', 'on');
-    xlim([-100 2500]);
-    xtl = [0, 200, 250, 700, 1200, 1700, 2200];
-    set(gca, 'XTick', xtl-BinSize/2);
-    set(gca, 'XTickLabel', {num2str((xtl-200)')});
+    xlim([0 500]);
+    xtl = [-100, 0, 50, 100, 250, 500];
+    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+    set(gca, 'XTickLabel', {num2str(xtl')});
     title(strcat('NeuronID:',num2str(NeuronNumber), ' - BinSize:', num2str(BinSize), ' - PreferredCylinerRotationDir: ' , num2str(pD)));
     
 %     hold on,
