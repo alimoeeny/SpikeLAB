@@ -32,19 +32,21 @@ DataPath = GetDataPath();
 % StimulusType = 'cylinder';
 
 % % % DPI
-% load('../AllPursuitNeurons.mat');
-% AllNeurons = AllPursuitNeurons;
-% clear AllPursuitNeurons;
-% FileType = 'DPI';
-% StimulusType = 'cylinder';
+load('../AllPursuitNeurons.mat');
+AllNeurons = AllPursuitNeurons;
+clear AllPursuitNeurons;
+FileType = 'DPI';
+StimulusType = 'cylinder';
 
 % % DPI rds
-load('../AllPursuitNeuronsrds.mat');
-AllNeurons = AllPursuitNeuronsrds;
-clear AllPursuitNeuronsrds;
-FileType = 'DPI';
-StimulusType = 'rds';
+% load('../AllPursuitNeuronsrds.mat');
+% AllNeurons = AllPursuitNeuronsrds;
+% clear AllPursuitNeuronsrds;
+% FileType = 'DPI';
+% StimulusType = 'rds';
 
+
+regenerateExsiting = 1;
 
 %par
 parfor iN= 1:length(AllNeurons), 
@@ -53,7 +55,7 @@ parfor iN= 1:length(AllNeurons),
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronNumber); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d'), ' - ' , num2str(rem(now,1))));
 
-    if ~(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.Eye.mat'))==2)
+    if (regenerateExsiting || ~(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.Eye.mat'))==2))
         filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat'); 
         filename(findstr(filename, '..')) = '';
         Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));

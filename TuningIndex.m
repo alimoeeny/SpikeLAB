@@ -94,6 +94,7 @@ for i = 1:length(values)
     end
 end
 
+tis = [];
 for i = 1:floor(length(eb)/2)
     a = i;
     b = 1 + length(eb) - i;
@@ -104,6 +105,10 @@ end
 TI = max(tis);
 if (TI < abs(min(tis)))
     TI = min(tis);
+end
+
+if(isempty(TI))
+    TI = -998;
 end
 
 % TI = (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) - sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) ) / ...

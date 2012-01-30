@@ -1,8 +1,13 @@
 function [s] = MonkeyAb(MonkeyName)
 
-if strcmpi(MonkeyName, 'icarus')
+mn = MonkeyName;
+
+if strcmpi(mn, 'ICARUS')
     s = 'ic';
-else if strcmpi(MonkeyName, 'dae')
+else if strcmpi(MonkeyName, 'DAE')
     s = 'dae';
+else if strcmpi(MonkeyName, 'TEST')
+    s = 'test';
+    end
     end
 end

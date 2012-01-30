@@ -1,29 +1,90 @@
-    figure(1357), clf, hold on,
-%     bar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))]);
-%     errorbar([mean(abs(PIPrefdx(~isnan(PIPrefdx)))), mean(abs(PIZerodx(~isnan(PIZerodx)))), mean(abs(PINulldx(~isnan(PINulldx)))), mean(abs(PI(~isnan(PI))))], ... 
-%              [std(abs(PIPrefdx(~isnan(PIPrefdx))))./sqrt(sum(~isnan(PIPrefdx))), std(abs(PIZerodx(~isnan(PIZerodx))))./sqrt(sum(~isnan(PIZerodx))), std(abs(PINulldx(~isnan(PINulldx))))./sqrt(sum(~isnan(PINulldx))), std(abs(PI(~isnan(PI))))./sqrt(sum(~isnan(PI)))]);
-%     
-%     [a, b, c] = anova1([abs(PI)', abs(PIPrefdx)', abs(PINulldx)', abs(PIZerodx)']);
-    PiP = PIPref .* (TI > 0) - PIPref .* (TI < 0);
-    PiN = PINull .* (TI > 0) - PINull .* (TI < 0);
-    PiZ = PIZero .* (TI > 0) - PIZero .* (TI < 0);
-    PiA = PI     .* (TI > 0) - PI     .* (TI < 0);
-    
-    bar([mean(abs(PiP(~isnan(PiP)))), ...
-         mean(abs(PiZ(~isnan(PiZ)))), ...
-         mean(abs(PiN(~isnan(PiN)))), ...
-         mean(abs(PiA(~isnan(PI)))), ...
-         mean(abs(PiA(abs(TI)<0.1)))]);
-    errorbar([mean(abs(PiP(~isnan(PiP)))), ...
-              mean(abs(PiZ(~isnan(PiZ)))), ...
-              mean(abs(PiN(~isnan(PiN)))), ...
-              mean(abs(PiA(~isnan(PI)))), ...
-              mean(abs(PiA(abs(TI)<0.1)))], ... 
-             [std(abs(PiP(~isnan(PiP))))./sqrt(sum(~isnan(PiP))), ...
-              std(abs(PiZ(~isnan(PiZ))))./sqrt(sum(~isnan(PiZ))), ...
-              std(abs(PiN(~isnan(PiN))))./sqrt(sum(~isnan(PiN))), ...
-              std(abs(PiA(~isnan(PI))))./sqrt(sum(~isnan(PI))), ...
-              std(abs(PiA(abs(TI)<0.1)))./sqrt(sum(abs(TI)<0.1))]);
-    
-    [a, b, c] = anova1([abs(PiP)', abs(PiZ)', abs(PiN)', abs(PiA)']);
-    multcompare(c);
+for i = 1: length(AllNeurons),
+    PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(1:i,41:42,:)));
+    figure(007007), clf, hold on,
+    h = plot(squeeze(PopPSTHSacTrigMean)');
+    set(h, 'LineWidth', 2);
+    set(gca, 'XGrid', 'on');
+    xlim([0 500]);
+    xtl = [-100, 0, 50, 100, 250, 500];
+    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+    set(gca, 'XTickLabel', {num2str(xtl')});
+    legend(h, GetLegends(FileType));
+    title(FileType);
+end
+
+
+%%
+for i = 1: length(AllNeurons),
+    PopPSTHSacTrigMean = squeeze((tPSTHSacTrigMean(i,[41:42],:)));
+    figure(007007), clf, hold on,
+    h = plot(squeeze(PopPSTHSacTrigMean)');
+    set(h, 'LineWidth', 2);
+    set(gca, 'XGrid', 'on');
+    xlim([0 500]);
+    xtl = [-100, 0, 50, 100, 250, 500];
+    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+    set(gca, 'XTickLabel', {num2str(xtl')});
+    legend(h, GetLegends(FileType));
+    title(FileType);
+end
+
+
+%%
+PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(PIS(:,10)>0,41:end,:)));
+figure(008008), clf, hold on,
+h = plot(squeeze(PopPSTHSacTrigMean)');
+PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(PIS(:,10)<0,41:end,:)));
+hold on, 
+plot(squeeze(PopPSTHSacTrigMean)');
+set(h, 'LineWidth', 2);
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);
+
+
+%%
+selector = [1:1:34];
+selector(88)=0;
+PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean((TI>0) & (selector > 0) , 41:42,:)));
+figure(010010), clf, hold on,
+h = plot(squeeze(PopPSTHSacTrigMean)');
+PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean((TI<0) & (selector > 0) , 41:42,:)));
+hold on, 
+plot(squeeze(PopPSTHSacTrigMean)');
+set(h, 'LineWidth', 2);
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);
+
+
+%%
+figure(8392), clf , hold on,
+a(:,1) = squeeze(mean(tPSTHSacTrigMean(TI>0,41,:)));
+a(:,2) = squeeze(mean(tPSTHSacTrigMean(TI<0,41,:)));
+
+a(:,3) = squeeze(mean(tPSTHSacTrigMean(TI>0,42,:)));
+a(:,4) = squeeze(mean(tPSTHSacTrigMean(TI<0,42,:)));
+
+h = plot(mean(a(:,[1]),2));
+h = plot(mean(a(:,[2]),2));
+h = plot(mean(a(:,[3]),2));
+h = plot(mean(a(:,[4]),2));
+h = plot(mean(a(:,[1,4]),2));
+h = plot(mean(a(:,[2,3]),2));
+
+set(h, 'LineWidth',2);
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);

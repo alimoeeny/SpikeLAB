@@ -1,4 +1,4 @@
-function [PIS] = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType)
+function [PIS] = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, TI)
 
 DataPath = GetDataPath();
 
@@ -34,7 +34,11 @@ else
 end
 
 deltatheta = atan2(dfy, dfx) + pi/2 - Expt.Stimvals.or .* pi / 180;
-deltatheta = mod(deltatheta, 2 * pi);
+%TEST 
+disp([' = = = =>> ', Expt.Header.Name, ' - or =' , num2str(Expt.Stimvals.or) ,' TEST = ', num2str(sum((cos(deltatheta)>0) ~= (mod(deltatheta, 2 * pi)==0)))]);
+%deltatheta = mod(deltatheta, 2 * pi);
+deltatheta = (cos(deltatheta)>0);
+    
 
 deltafxy = fix(deltafxy);
 Speeds = unique(abs(deltafxy(deltafxy>0)));
@@ -108,6 +112,20 @@ D1_2 = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0));
 D2_1 = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0));
 D2_2 = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0));
 
+D0_1 = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0));
+D0_2 = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0));
+
+dx_1 = (mean(SpikeCounts(D1_1)) - mean(SpikeCounts(D1_2))) ./ (mean(SpikeCounts(D1_1)) + mean(SpikeCounts(D1_2)));
+dx_2 = (mean(SpikeCounts(D2_1)) - mean(SpikeCounts(D2_2))) ./ (mean(SpikeCounts(D2_1)) + mean(SpikeCounts(D2_2)));
+dx_0 = (mean(SpikeCounts(D0_1)) - mean(SpikeCounts(D0_2))) ./ (mean(SpikeCounts(D0_1)) + mean(SpikeCounts(D0_2)));
+
+if(TI<0)
+  dx_Pref = -dx_2;
+  dx_Null = -dx_1;
+else
+  dx_Pref = -dx_1;
+  dx_Null = -dx_2;
+end
 
 dxEffect  = ((mean(SpikeCounts(D1_1)) - mean(SpikeCounts(D2_1))) + (mean(SpikeCounts(D1_2)) - mean(SpikeCounts(D2_2)))) ./ ...
             ((mean(SpikeCounts(D1_1)) + mean(SpikeCounts(D2_1))) + (mean(SpikeCounts(D1_2)) + mean(SpikeCounts(D2_2))));
@@ -126,9 +144,10 @@ end
 PIS= [-PIFast2, -PIFast0, -PIFast1, ...
       -PISlow2, -PISlow0, -PISlow1, ...
       -PIMid2, -PIMid0, -PIMid1, ...
-      -PI, ... %10
+      PI, ... %10
       -PIFast, -PISlow, -PIMid, ...
-      dxEffect, dxMaxDelta];
+      dxEffect, dxMaxDelta, ... % 15
+      dx_1, dx_2, dx_0, dx_Pref, dx_Null]; % 20
  
 %disp(B);
 %disp(PIS);

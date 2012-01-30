@@ -91,8 +91,10 @@ TI=[];
 
 
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
+
+SacBars = {};
 %par
-parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
+for iN= 36: length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
@@ -118,18 +120,22 @@ parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
             [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
         case 'DPI'
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
-            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            ti      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
+            %TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], 1);
+            %[p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
             [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            %[pSacM, pSacSe, pSacPrj] = PlotSaccades(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType);
+            %SacBars{iN} = [pSacM , pSacSe, pSacPrj];
             
-            PIS(iN,:) = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType);
-            dxEffectPeak(iN) = dxEffectMax(MonkeyName, NeuronNumber, ClusterName, 'rds');
-            
+            %PIS(iN,:) = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ti);
+            %dxEffectPeak(iN) = dxEffectMax(MonkeyName, NeuronNumber, ClusterName, 'rds');
+            TI(iN) = ti;
     end
     
-    %eb = convn(eb, SmthKernel')./ sum(SmthKernel);
+    pD = -10;
     pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
     orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    
     if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID') || ((strcmpi(FileType, 'DPI')) && (strcmpi(StimulusType, 'rds'))))
         cellValid  = 1; vScore = 1;
     else
@@ -147,13 +153,24 @@ parfor iN= 1:length(AllNeurons) %:-1:1 %1:length(AllNeurons)
     filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     
     binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
+    %save(['~/Desktop/matlab.', num2str(iN),'.mat']);
 end
+
+
+%%   
+save ~/Desktop/matlab.mat -v7.3
 
 %%
 validCells = []; for i = 1: length(PSTHs), if~isempty(PSTHs{i}), validCells(i) = [PSTHs{i}{4}]; end; end
 AllConditions = [];
 
-for i = 1 : length(AllNeurons),
+for i = 1 : length(PSTHs) % length(AllNeurons),
+    if (~isempty(SacBars))
+        if (~isempty(SacBars{i}))
+            SacMeanVects(i,:,:,:,:) = SacBars{i};
+            SacSEMVects (i,:,:,:,:) = SacBars{i};
+        end
+    end
     if (~isempty(PSTHs{i}) && ~isempty(PSTHs{i}{14}))
         tPSTHSacTrigMean(i, :, :) = PSTHs{i}{14};
     end
@@ -167,16 +184,7 @@ for i = 1 : length(AllNeurons),
         AllConditions(i,:) = sum([PSTHs{i}{2}],2);
         eb = ([PSTHs{i}{3}]);
         pD(i) = ([PSTHs{i}{6}]);
-%         ebSacTrig = ([PSTHs{i}{13}]);
-%         for iST = 1: size(ebSacTrig,1),
-%             ebSacTrigMean(iST,:) = squeeze(mean(ebSacTrig(iST,squeeze(mean(ebSacTrig(iST,:,:),3))'>0,:)));
-%         end
-%         tPSTHSacTrigMean(i, :, :) = ebSacTrigMean;
-%                 
-%         figure(11), clf, hold on,
-%         for tmpi = 1:30,
-%             plot(ebSacTrigMean(tmpi,:)); 
-%         end
+
         
         tPSTHSacTrigMean(i, :, :) = PSTHs{i}{14};
         
@@ -273,7 +281,7 @@ end
 
 %%
 if exist('tPSTHSacTrigMean')
-        PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
+  PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
 end
 
 
@@ -444,6 +452,81 @@ title(FileType);
 %errorbar(squeeze(PopPSTH)', squeeze(PopPSTHse)');
 
 sum(criteria)
+
+
+
+%% 
+
+figure(2502),
+clf, hold on,
+
+h = plot(squeeze(mean(tPSTHSacTrigMean(PIS(:,10)<0,[41:42 71:76],:)))');
+set(h, 'LineWidth', 2);
+h = plot(squeeze(mean(tPSTHSacTrigMean(PIS(:,10)>0,[41:42 71:76],:)))');
+set(h, 'LineWidth', 4);
+h = plot(squeeze(mean(tPSTHSacTrigMean(:,[41:42 71:76],:)))');
+set(h, 'LineWidth', 6);
+
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);
+
+
+%%
+%load ~/Desktop/matlab.cylDPI.new.mat
+figure(8392), clf , hold on,
+a(:,1) = squeeze(mean(tPSTHSacTrigMean(TI>0,41,:)));
+a(:,2) = squeeze(mean(tPSTHSacTrigMean(TI<0,41,:)));
+a(:,3) = squeeze(mean(tPSTHSacTrigMean(TI>0,42,:)));
+a(:,4) = squeeze(mean(tPSTHSacTrigMean(TI<0,42,:)));
+h = plot(mean(a(:,[1,4]),2));
+h = plot(mean(a(:,[2,3]),2));
+
+%%
+for i = 1: length(AllNeurons),
+    PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(1:i,41:end,:)));
+    figure(007007), clf, hold on,
+    h = plot(squeeze(PopPSTHSacTrigMean)');
+    set(h, 'LineWidth', 2);
+    set(gca, 'XGrid', 'on');
+    xlim([0 500]);
+    xtl = [-100, 0, 50, 100, 250, 500];
+    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+    set(gca, 'XTickLabel', {num2str(xtl')});
+    legend(h, GetLegends(FileType));
+    title(FileType);
+end
+
+
+
+%%
+load ~/Desktop/matlab.cylDPI.new.mat
+figure(8392), clf , hold on,
+a(:,1) = squeeze(mean(tPSTHSacTrigMean(TI>0,41,:)));
+a(:,2) = squeeze(mean(tPSTHSacTrigMean(TI<0,41,:)));
+
+a(:,3) = squeeze(mean(tPSTHSacTrigMean(TI>0,42,:)));
+a(:,4) = squeeze(mean(tPSTHSacTrigMean(TI<0,42,:)));
+
+h = plot(mean(a(:,[1]),2));
+h = plot(mean(a(:,[2]),2));
+h = plot(mean(a(:,[3]),2));
+h = plot(mean(a(:,[4]),2));
+h = plot(mean(a(:,[1,4]),2));
+h = plot(mean(a(:,[2,3]),2));
+
+set(h, 'LineWidth',2);
+set(gca, 'XGrid', 'on');
+xlim([0 500]);
+xtl = [-100, 0, 50, 100, 250, 500];
+set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title(FileType);
 
 %%
 
@@ -738,5 +821,19 @@ for iN = 1: length(AllNeurons)
 end
 
 disp(mean(ee) / mean(dd));
+
+
+%%
+
+
+figure(1312), 
+clf, hold on,
+clickscatter(SacMeanVects(:,41,5), SacMeanVects(:,42,5), 6, 6, filenamesforbruce);
+clickscatter(SacMeanVects(:,71,5), SacMeanVects(:,42,5), 7, 7, filenamesforbruce);
+   
+
+
+
+
 
 

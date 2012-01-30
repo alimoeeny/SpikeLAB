@@ -153,76 +153,111 @@ switch upper(FileType)
 
             end
     end
-    % - - - - - - - Lets do it again
-%   	conditions(11,:) = (deltafxy>0) & [Expt.Trials(:).dx]==0;
-%     conditions(12,:) = (deltafxy<0) & [Expt.Trials(:).dx]==0;
-%     if(PrefCyldx==2)
-%       	conditions(13,:) = (deltafxy>0) & [Expt.Trials(:).dx]<0;
-%         conditions(14,:) = (deltafxy<0) & [Expt.Trials(:).dx]<0;
-%       	conditions(15,:) = (deltafxy>0) & [Expt.Trials(:).dx]>0;
-%         conditions(16,:) = (deltafxy<0) & [Expt.Trials(:).dx]>0;
-%     else
-%       	conditions(13,:) = (deltafxy>0) & [Expt.Trials(:).dx]>0;
-%         conditions(14,:) = (deltafxy<0) & [Expt.Trials(:).dx]>0;
-%       	conditions(15,:) = (deltafxy>0) & [Expt.Trials(:).dx]<0;
-%         conditions(16,:) = (deltafxy<0) & [Expt.Trials(:).dx]<0;
-%     end
+
     
-%        JUNK
-%
-%     if (isfield(Expt.Trials(1), 'dfx'))
-%         PIx = [Expt.Trials(:).dfx];
-%     else
-%         if (Expt.Stimvals.or==0)
-%             PIx = -[Expt.Trials(:).dfy];
-%         else
-%             PIx = [Expt.Trials(:).dfy];
-%         end
-%     end
-% 
-%     if ((Expt.Stimvals.or>=0) && (Expt.Stimvals.or <= 180))
-%         conditions(20, :) = (PIx>0);
-%         conditions(21, :) = (PIx<0);
-%         conditions(22, :) = (PIx>0) & ([Expt.Trials(:).dx]==0);
-%         conditions(23, :) = (PIx<0) & ([Expt.Trials(:).dx]==0);
-%         conditions(24, :) = (PIx>0) & (sign([Expt.Trials(:).dx])==sign(1.5 - PrefCyldx));
-%         conditions(25, :) = (PIx<0) & (sign([Expt.Trials(:).dx])==sign(1.5 - PrefCyldx));
-%         conditions(26, :) = (PIx>0) & (sign([Expt.Trials(:).dx])==-sign(1.5 - PrefCyldx));
-%         conditions(27, :) = (PIx<0) & (sign([Expt.Trials(:).dx])==-sign(1.5 - PrefCyldx));
-%     else
-%         conditions(20, :) = (PIx<0);
-%         conditions(21, :) = (PIx>0);
-%         conditions(22, :) = (PIx<0) & ([Expt.Trials(:).dx]==0);
-%         conditions(23, :) = (PIx>0) & ([Expt.Trials(:).dx]==0);
-%         conditions(24, :) = (PIx<0) & (sign([Expt.Trials(:).dx])==sign(1.5 - PrefCyldx));
-%         conditions(25, :) = (PIx>0) & (sign([Expt.Trials(:).dx])==sign(1.5 - PrefCyldx));
-%         conditions(26, :) = (PIx<0) & (sign([Expt.Trials(:).dx])==-sign(1.5 - PrefCyldx));
-%         conditions(27, :) = (PIx>0) & (sign([Expt.Trials(:).dx])==-sign(1.5 - PrefCyldx));        
-%     end
+    if isfield(Expt.Trials,'dfx')
+        deltafxy = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
+    else
+        deltafxy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
+    end
+
+    if isfield(Expt.Trials,'dfx')
+        dfx = [Expt.Trials(:).dfx] - [Expt.Trials(:).fx];
+    else
+        dfx = zeros(1,length(Expt.Trials));
+    end
+    if isfield(Expt.Trials,'dfy')
+        dfy = [Expt.Trials(:).dfy] - [Expt.Trials(:).fy];
+    else
+        dfy = zeros(1,length(Expt.Trials));
+    end
+
+    deltatheta = atan2(dfy, dfx) + pi/2 - Expt.Stimvals.or .* pi / 180;
+    %TEST 
+    disp([' => ', Expt.Header.Name, ' - or =' , num2str(Expt.Stimvals.or) ,' TEST = ', num2str(sum((cos(deltatheta)>0) ~= (mod(deltatheta, 2 * pi)==0)))]);
+    %deltatheta = mod(deltatheta, 2 * pi);
+    deltatheta = (cos(deltatheta)>0);
     
-%     if ((Expt.Stimvals.or<=180) && (Expt.Stimvals.or>=-180))
-%         %disp('We''ve got a problem here! why 20, 21 are not = to 7, 8 ?');
-%         conditions(20, :) = sign(PIx) == sign(Expt.Stimvals.or); 
-%         conditions(21, :) = sign(PIx) ~= sign(Expt.Stimvals.or);
-%         
-%         conditions(22, :) = (sign(PIx) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
-%         conditions(23, :) = (sign(PIx) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
-%         conditions(24, :) = (sign(PIx) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
-%         conditions(25, :) = (sign(PIx) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0);
-%         conditions(26, :) = sign(PIx) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
-%         conditions(27, :) = sign(PIx) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
-%     else
-%         conditions(20, :) = sign(PIx) ~= sign(Expt.Stimvals.or);
-%         conditions(21, :) = sign(PIx) == sign(Expt.Stimvals.or);        
-% 
-%         conditions(22, :) = ((sign(PIx) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
-%         conditions(23, :) = ((sign(PIx) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) == sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
-%         conditions(24, :) = ((sign(PIx) ~= sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
-%         conditions(25, :) = ((sign(PIx) == sign(Expt.Stimvals.or)) & (([Expt.Trials(:).dx]>0) ~= sign(2 - PrefCyldx)) & ([Expt.Trials(:).dx]~=0));
-%         conditions(26, :) = sign(PIx) ~= sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
-%         conditions(27, :) = sign(PIx) == sign(Expt.Stimvals.or) & ([Expt.Trials(:).dx]==0);
-%     end
-        
+    deltafxy = fix(deltafxy);
+    Speeds = unique(abs(deltafxy(deltafxy>0)));
+
+
+    conditions(41,:) = (deltatheta == 0);
+    conditions(42,:) = (deltatheta ~= 0);
+
+    conditions(43,:) = (deltatheta == 0) & (abs(deltafxy)== max(Speeds));
+    conditions(44,:) = (deltatheta ~= 0) & (abs(deltafxy) ==max(Speeds));
+
+    conditions(45,:) = (deltatheta == 0) & (abs(deltafxy)== min(Speeds));
+    conditions(46,:) = (deltatheta ~= 0) & (abs(deltafxy)== min(Speeds));
+
+    conditions(47,:) = (deltatheta == 0) & (abs(deltafxy)==Speeds(round(end/2)));
+    conditions(48,:) = (deltatheta ~= 0) & (abs(deltafxy)==Speeds(round(end/2)));
+
+
+    conditions(49,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0) & (abs(deltafxy)== max(Speeds)) );
+    conditions(50,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0) & (abs(deltafxy)== max(Speeds)) );
+
+    conditions(51,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0) & (abs(deltafxy)== min(Speeds)) );
+    conditions(52,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0) & (abs(deltafxy)== min(Speeds)));
+
+    conditions(53,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0) & (abs(deltafxy)==Speeds(round(end/2))) );
+    conditions(54,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0) & (abs(deltafxy)==Speeds(round(end/2))));
+
+
+    conditions(55,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0) & (abs(deltafxy)== max(Speeds)) );
+    conditions(56,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0) & (abs(deltafxy)== max(Speeds)) );
+
+    conditions(57,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0) & (abs(deltafxy)== min(Speeds)) );
+    conditions(58,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0) & (abs(deltafxy)== min(Speeds)));
+
+    conditions(59,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0) & (abs(deltafxy)==Speeds(round(end/2))) );
+    conditions(60,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0) & (abs(deltafxy)==Speeds(round(end/2))));
+
+
+    conditions(61,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0) & (abs(deltafxy)== max(Speeds)) );
+    conditions(62,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0) & (abs(deltafxy)== max(Speeds)) );
+
+    conditions(63,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0) & (abs(deltafxy)== min(Speeds)) );
+    conditions(64,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0) & (abs(deltafxy)== min(Speeds)));
+
+    conditions(65,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0) & (abs(deltafxy)==Speeds(round(end/2))) );
+    conditions(66,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0) & (abs(deltafxy)==Speeds(round(end/2))));
+
+
+    conditions(67,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0));
+    conditions(68,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0));
+
+    conditions(69,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0));
+    conditions(70,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0));
+
+    if(PrefCyldx==2)
+        conditions(71,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0));
+        conditions(72,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0));
+
+        conditions(73,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0));
+        conditions(74,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0));
+
+        conditions(75,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0));
+        conditions(76,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0));
+    else
+        conditions(71,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta == 0));
+        conditions(72,:) = (([Expt.Trials(:).dx] > 0) & (deltatheta ~= 0));
+
+        conditions(73,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta == 0));
+        conditions(74,:) = (([Expt.Trials(:).dx] == 0) & (deltatheta ~= 0));
+
+        conditions(75,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta == 0));
+        conditions(76,:) = (([Expt.Trials(:).dx] < 0) & (deltatheta ~= 0));
+    end
+    
+    if(sum(sum(conditions(41:74,:),2)==0)>0)
+        disp('empty condition');
+    end
+    
+    
+    
+    
     % = = = = = = = = = = = = = = = = = = = = = 
     case 'DT'
         conditions(1,:) = ones(1, length([Expt.Trials(:)]));

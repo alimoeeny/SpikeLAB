@@ -1,4 +1,4 @@
-function [PSTHSacTrig, conditions, eb, varargout]= PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, Cumulative, PlotIt)
+function [PSTHSacTrig, conditions, eb, es, varargout]= PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, Cumulative, PlotIt)
 % Plots the Saccade Triggered PSTH for different conditions in the Experiment
 varargout{1} = [];
 varargout{2} = [];
@@ -49,12 +49,18 @@ StartOffset = 500;
 PSTHSacTrig = num2cell(zeros(length([Expt.Trials]),1));
 PSTHSacTrigR= num2cell(zeros(length([Expt.Trials]),1));
 shufTrials = randperm(length([Expt.Trials]));
+
+scaling = Expt.Header.emtimes(end) / length(Expt.Header.emtimes) / 10;
+
+
 %par
 for tr = 1: length([Expt.Trials]),
     psth = [];
+    saccade = [];
     scounter = 0;
     for sc = 1: length([Expt.Trials(tr).Saccades])
         if ((Expt.Trials(tr).Saccades(sc).start > StartOffset * 10) && (Expt.Trials(tr).Saccades(sc).start + TrialLength * 10 < Expt.Trials(tr).End))
+          if (Expt.Trials(tr).Saccades(sc).size > 0.2)
             scounter = scounter + 1;
             for tt = 1:TrialLength,
                 psth(tt) = sum([Expt.Trials(tr).Spikes]>=(tt*10 + Expt.Trials(tr).Saccades(sc).start - preSaccadeInterval * 10) & [Expt.Trials(tr).Spikes]<=(tt*10 + Expt.Trials(tr).Saccades(sc).start + BinSize*10 - preSaccadeInterval * 10)) * 1000 / BinSize;
@@ -62,6 +68,12 @@ for tr = 1: length([Expt.Trials]),
             psth = conv(psth, SmthKernel, 'same') ./ sum(SmthKernel);        
             PSTHSacTrig{tr, scounter} = psth;
             PSTHSacTrigR{shufTrials(tr), scounter} = psth;
+            
+            idata = Expt.Trials(tr).EyeData;
+            saccade = idata(round(Expt.Trials(tr).Saccades(sc).start / scaling / 10): round(Expt.Trials(tr).Saccades(sc).end / scaling /10),:);
+            %saccade = conv(saccade, SmthKernel, 'same') ./ sum(SmthKernel);        
+            Saccades{tr, scounter} = saccade;
+          end
         end
     end
 end
@@ -79,62 +91,29 @@ for cc = 1: size(conditions,1)
     end
 end
 
-% ebm = zeros(size(eb,1), size(eb,3));
-% for i = 1 : size(eb,1),
-%     c = 0;
-%     for j = 1 : size(eb,2),
-%         ebm(i,:) = ebm(i,:) + squeeze(eb(i,j, :))';
-%         c = c + 1;
-%     end
-%     if (c>0)
-%         ebm(i,:) = ebm(i,:) ./ c;
-%     end
-% end
 
-
-if strcmpi(FileType, 'DID')
-    startPointer = 750; %250;
-    endPointer = 1500; %750;
-    cuttoff = median(mean(PSTH(conditions(3,:), startPointer: endPointer),2));
-    eDb(1,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
-    eDb(2,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
-    varargout{2} = eDb;
-    eb(size(eb,1)+1,:) = eDb(1,:);
-    eb(size(eb,1)+1,:) = eDb(2,:);
-    conditions(size(conditions,1)+1,:)  = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
-
-    cuttoff = median(mean(PSTH(conditions(4,:), startPointer: endPointer),2));
-    eDb(3,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
-    eDb(4,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
-    varargout{2} = eDb;
-    eb(size(eb,1)+1,:) = eDb(3,:);
-    eb(size(eb,1)+1,:) = eDb(4,:);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
-
-% ---------
-    startPointer = 750;
-    endPointer = 1500;
-    cuttoff = median(mean(PSTH(conditions(3,:), startPointer: endPointer),2));
-    eDb(5,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
-    eDb(6,:)      = mean(PSTH((conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
-    varargout{2} = eDb;
-    eb(size(eb,1)+1,:) = eDb(5,:);
-    eb(size(eb,1)+1,:) = eDb(6,:);
-    conditions(size(conditions,1)+1,:)  = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(3,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
-
-    cuttoff = median(mean(PSTH(conditions(4,:), startPointer: endPointer),2));
-    eDb(7,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) > cuttoff), :),1);
-    eDb(8,:)      = mean(PSTH((conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff), :),1);
-    varargout{2} = eDb;
-    eb(size(eb,1)+1,:) = eDb(7,:);
-    eb(size(eb,1)+1,:) = eDb(8,:);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) >cuttoff);
-    conditions(size(conditions,1)+1,:) = (conditions(4,:)' & mean(PSTH(:, startPointer: endPointer),2) <=cuttoff);
-
+es = zeros(size(Saccades,1), 0, TrialLength);
+AvgSaccade = zeros(size(Saccades,1), 4, 100);
+s = [];
+for iN = 1:size(Saccades,1)
+    for sc = 1:size(Saccades(iN,:),2)
+        if isempty(Saccades{iN,sc})
+            break;
+        else
+            if (size(Saccades{iN,sc},1) > 5)
+                s(sc,1:4,1:length(Saccades{iN,sc})) = Saccades{iN,sc}';
+            end
+        end
+    end
+    if (~isempty(s))
+        if (size(s,1)>1)
+            AvgSaccade(iN,1:4,1:size(s,3)) = squeeze(mean(s));
+        else
+            AvgSaccade(iN,1:4,1:size(s,3)) = squeeze(s);
+        end
+    end
 end
+
 
 
 for nanc = 1: size(eb,1)
@@ -145,59 +124,6 @@ for nanc = 1: size(eb,1)
     end
 end
 
-% choice probabilities
-switch FileType
-    case 'ABD'
-        disp(ROCAUC(PSTH(conditions(1,:),1000:2000),PSTH(conditions(2,:),1000:2000))); 
-    case {'DID', 'DIDB'}
-        %roc1 = ROCAUC(PSTH(conditions(3,:),50:550),PSTH(conditions(5,:),50:550));
-        %roc2 = ROCAUC(PSTH(conditions(6,:),50:550),PSTH(conditions(4,:),50:550));
-        %disp(['First 500ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
-        roc1 = ROCAUC(mean(PSTH(conditions(3,:),300:800),2),mean(PSTH(conditions(5,:),300:800),2));
-        roc2 = ROCAUC(mean(PSTH(conditions(6,:),300:800),2),mean(PSTH(conditions(4,:),300:800),2));
-        disp(['First 100-600ms ROCs, Pref: ' num2str(roc1) ' , Null: ' num2str(roc2)]); 
-        a = zscore(mean(PSTH(conditions( 9,:)|conditions(10,:), 200:2100),2)); %1100:2100),2));
-        b = zscore(mean(PSTH(conditions(11,:)|conditions(12,:), 200:2100),2)); %1100:2100),2));
-        aa = [a(1 : sum(conditions(9,:))) ; b(1 : sum(conditions(11,:)))];
-        bb = [a(sum(conditions(9,:))+1 : sum(conditions(9,:))+sum(conditions(10,:))) ; b(sum(conditions(11,:))+1 : sum(conditions(11,:))+sum(conditions(12,:)))];
-        roc3 = ROCAUC(aa, bb);
-        %main effect ROC 
-        %roc4 = ROCAUC(PSTH(conditions(1,:),1200:2200),PSTH(conditions(2,:),1200:2200));
-        [roc4, sig4, tmp] = ROCAUCSignificance(mean(PSTH(conditions(1,:),1200:2200),2),mean(PSTH(conditions(2,:),1200:2200),2));
-        disp(['-------- --------- ---------- ------------ Main Effect sig:    ' , num2str(roc4), '   ===   ', num2str(sig4)]);
-        roc5 = ROCAUC(PSTH(conditions(1,:),1000:2000),PSTH(conditions(2,:),1000:2000));
-        %next to zero Stimulus AND choice
-        roc6 = ROCAUC(PSTH(conditions(13,:),300:2000),PSTH(conditions(14,:),300:2000));
-        % next to zero z scored
-        a = zscore(mean(PSTH(conditions( 16,:)|conditions(17,:), 200:2100),2)); %1100:2100),2));
-        b = zscore(mean(PSTH(conditions(18,:)|conditions(19,:), 200:2100),2)); %1100:2100),2));
-        aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
-        bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
-        roc7 = ROCAUC(aa, bb);
-        
-        
-        varargout{1}(1) = roc1;
-        varargout{1}(2) = roc2;
-        varargout{1}(3) = roc3;
-        varargout{1}(4) = roc4;
-        varargout{1}(5) = roc5;
-        varargout{1}(6) = roc6;
-        varargout{1}(7) = roc7;
-    case 'BDID'
-        %main effect ROC 
-        roc4 = ROCAUC(PSTH(conditions(7,:),1200:2200),PSTH(conditions(8,:),1200:2200));
-        varargout{1}(4) = roc4;
-    case 'DPI' 
-        eb(size(eb,1)+1, :) = eb(1,:) - eb(2,:);
-        eb(size(eb,1)+1, :) = eb(3,:) - eb(4,:);
-        eb(size(eb,1)+1, :) = eb(5,:) - eb(6,:);
-
-        ebR(size(ebR,1)+1, :) = ebR(1,:) - ebR(2,:);
-        ebR(size(ebR,1)+1, :) = ebR(3,:) - ebR(4,:);
-        ebR(size(ebR,1)+1, :) = ebR(5,:) - ebR(6,:);
-        
-        %eb = [eb ; ebR];
-end
 
 warning off
 if(PlotIt)
@@ -235,18 +161,6 @@ if(PlotIt)
     set(gca, 'XTickLabel', {num2str(xtl')});
     title(strcat('NeuronID:',num2str(NeuronNumber), ' - BinSize:', num2str(BinSize), ' - PreferredCylinerRotationDir: ' , num2str(pD)));
     
-%     hold on,
-% %    errorbar(eb', se');
-%     xstep = 100;
-%     xfake = 1:xstep:size(eb,2);
-%     for xfk = 2:size(eb,1)
-%         xfake = [xfake;1:xstep:size(eb,2)] ;
-%     end
-%     if strfind(FileType, 'RID')
-%        errorbar(xfake(:,1:4), eb(1:4,[1:xstep:end])', se(1:4,[1:xstep:end])', 'x', 'LineWidth',2)   
-%     else
-%        errorbar(xfake', eb(:,[1:xstep:end])', se(:,[1:xstep:end])', 'x', 'LineWidth',2)   
-%     end
     
 end
 warning on

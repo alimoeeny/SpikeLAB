@@ -55,37 +55,40 @@ switch upper(ft)
             'max bd'};
     case 'DPI'
         leg = {
-            'dx=0 , pursuit toward pref motion dir', ...    % 1
-            'dx=0 , pursuit away pref motion dir', ...      % 2
-            'dx pref , pursuit toward pref motion dir', ... % 3
-            'dx pref , pursuit away pref motion dir', ...   % 4
-            'dx null , pursuit toward pref motion dir', ... % 5
-            'dx null , pursuit away pref motion dir', ...   % 6
-            'pursuit toward pref motion dir', ...           % 7
-            'pursuit away from pref motion dir', ...        % 8
-            'dx pref - pursuit away pref dir', ...          %9
-            'dx null - pursuit toward pref dir', ...            % 10
-            'dx = 0, Positive Pursuit', ... % 11
-            'dx = 0, Negative Pursiut', ... % 12
-            'dx Pref, Positive Pursuit', ... % 13
-            'dx Pref, Negative Pursuit', ... % 14
-            'dx null, Positive Pursuit', ... % 15
-            'dx null, negative Pursuit', ... % 16
-            '-', ...
-            '-', ...
-            '-', ...
-            'pursuit towards pref', ...   % 20
-            'pursuit away from pref', ... % 21
-            'dx pref, pursuit pref', ...  % 22
-            'dx pref, pursuit null', ...  % 23
-            'dx null, pursuit pref', ...  % 24
-            'dx null, pursuit null', ...  % 25
-            'dx = 0, pursuit pref', ...   % 26
-            'dx = 0, pursuit null', ...   % 27
-            'dx = 0 diff', ... % dynamic + 1
-            'dx pref diff', ... % dynamic + 2
-            'dx null diff', ... % dynamic + 3 
-            };
+            '1dx=0 , pursuit toward pref motion dir', ...    % 1
+            '2dx=0 , pursuit away pref motion dir', ...      % 2
+            '3dx pref , pursuit toward pref motion dir', ... % 3
+            '4dx pref , pursuit away pref motion dir', ...   % 4
+            '5dx null , pursuit toward pref motion dir', ... % 5
+            '6dx null , pursuit away pref motion dir', ...   % 6
+            '7pursuit toward pref motion dir', ...           % 7
+            '8pursuit away from pref motion dir', ...        % 8
+            '9dx pref - pursuit away pref dir', ...          %9
+            '10dx null - pursuit toward pref dir', ...            % 10
+            '11dx = 0, Positive Pursuit', ... % 11
+            '12dx = 0, Negative Pursiut', ... % 12
+            '13dx Pref, Positive Pursuit', ... % 13
+            '14dx Pref, Negative Pursuit', ... % 14
+            '15dx null, Positive Pursuit', ... % 15
+            '16dx null, negative Pursuit', ... % 16
+            '17-', ...
+            '18-', ...
+            '19-', ...
+            '20pursuit towards pref', ...   % 20
+            '21pursuit away from pref', ... % 21
+            '22dx pref, pursuit pref', ...  % 22
+            '23dx pref, pursuit null', ...  % 23
+            '24dx null, pursuit pref', ...  % 24
+            '25dx null, pursuit null', ...  % 25
+            '26dx = 0, pursuit pref', ...   % 26
+            '27dx = 0, pursuit null', ...   % 27
+            '28dx = 0 diff', ... % dynamic + 1
+            '29dx pref diff', ... % dynamic + 2
+            '30dx null diff', ... % dynamic + 3 
+            '31', '32', '33', '34', '35', '36', '37', '38', '39', '40', ...
+            '41', '42', '43', '44', '45', '46', '47', '48', '49', '50', ...
+            '51', '52', '53', '54', '55', '56', '57', '58', '59', '60', ...
+            '61', '62', '63', '64', '65', '66', '67', '68', '69', '70'};
     case 'RID'
         leg = {'Pref Or Pref dx','Pref Or null dx','Null Or Pref dx ','null Or null dx'};
 %    case 'DIDB'
