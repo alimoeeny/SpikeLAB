@@ -2,4 +2,4 @@
 *.m~
 .DS_Store
 figs/*
-
+.dropbox*
