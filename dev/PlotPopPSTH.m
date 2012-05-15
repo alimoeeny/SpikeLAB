@@ -11,11 +11,11 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % StimulusType = 'cylinder';
 
 % % % % DID
-% load('../AllDIDNeurons.mat');
-% AllNeurons = AllDIDNeurons;
-% clear AllDIDNeurons;
-% FileType = 'DID';
-% StimulusType = 'cylinder';
+load('../AllDIDNeurons.mat');
+AllNeurons = AllDIDNeurons;
+clear AllDIDNeurons;
+FileType = 'DID';
+StimulusType = 'cylinder';
 
 
 % % % TWO
@@ -57,11 +57,11 @@ ShowSingleCellSDFs = 0; % 0 or 1
 
 
 % % % DPI
-load('../AllPursuitNeurons.mat');
-AllNeurons = AllPursuitNeurons;
-clear AllPursuitNeurons;
-FileType = 'DPI';
-StimulusType = 'cylinder';
+% load('../AllPursuitNeurons.mat');
+% AllNeurons = AllPursuitNeurons;
+% clear AllPursuitNeurons;
+% FileType = 'DPI';
+% StimulusType = 'cylinder';
 % % % %%%StartTime  = 500;% 10000; %500; %10000; 
 % % % %%%FinishTime = 20000;
 
@@ -94,7 +94,7 @@ TI=[];
 
 SacBars = {};
 %par
-for iN= 36: length(AllNeurons)
+for iN= 1: length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 

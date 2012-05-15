@@ -18,7 +18,7 @@ DataPath = '/bgc/data/';
 %  StimulusType = 'cylinder';
 
 % % DID
-load('/Users/ali/DropBox/Projects/BCode/AllDIDNeurons.mat');
+load('../AllDIDNeurons.mat');
 AllNeurons = AllDIDNeurons;
 clear AllDIDNeurons;
 FileType = 'DID';

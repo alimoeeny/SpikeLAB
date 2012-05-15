@@ -1,90 +1,52 @@
-for i = 1: length(AllNeurons),
-    PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(1:i,41:42,:)));
-    figure(007007), clf, hold on,
-    h = plot(squeeze(PopPSTHSacTrigMean)');
-    set(h, 'LineWidth', 2);
-    set(gca, 'XGrid', 'on');
-    xlim([0 500]);
-    xtl = [-100, 0, 50, 100, 250, 500];
-    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
-    set(gca, 'XTickLabel', {num2str(xtl')});
-    legend(h, GetLegends(FileType));
-    title(FileType);
+
+energycutoff=100000;
+border = 240;
+myspks = [];
+spikeEnergies = [];
+
+%load('/sc/bgc5/Utah/lem/G001/lemG001002.mat'); % -600
+load('/sc/bgc5/Utah/lem/G002/lemG002001.mat');
+
+peakVoltages = NEV.Data.Spikes.Waveform(:,13);
+probe = 1;
+timeStamps = NEV.Data.Spikes.TimeStamp(NEV.Data.Spikes.Electrode==probe);
+
+
+for i = 1:length(timeStamps)
+    disp(i);
+    spikeEnergies(i) = sum(diff(NEV.Data.Spikes.Waveform(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==probe),:)).^2);
+%     if  (peakVoltages(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==10))>-300)
+%         spikeEnergies(i) = -spikeEnergies(i);
+%     end 
+    spks(i,:) = NEV.Data.Spikes.Waveform(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==probe),:); % - NEV.Data.Spikes.Waveform(i,10);
+%     myspks(i,1,:) = 1 * full_voltage(probe,timeStamps(i)-border:timeStamps(i)+border);
+%     myspks(i,2,:) = 1 * filtered_voltage(probe,timeStamps(i)-border:timeStamps(i)+border);
+%     myspks(i,3,:) = 1 * freq_filtered_signal(timeStamps(i)-border:timeStamps(i)+border);
+%     myspks(i,4,:) = 1 * averagedNoise(timeStamps(i)-border:timeStamps(i)+border);
 end
 
+figure(1982+probe), clf, hold on, hist(spikeEnergies,100)
 
-%%
-for i = 1: length(AllNeurons),
-    PopPSTHSacTrigMean = squeeze((tPSTHSacTrigMean(i,[41:42],:)));
-    figure(007007), clf, hold on,
-    h = plot(squeeze(PopPSTHSacTrigMean)');
-    set(h, 'LineWidth', 2);
-    set(gca, 'XGrid', 'on');
-    xlim([0 500]);
-    xtl = [-100, 0, 50, 100, 250, 500];
-    set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
-    set(gca, 'XTickLabel', {num2str(xtl')});
-    legend(h, GetLegends(FileType));
-    title(FileType);
-end
+figure(1123), clf, hold on, 
+plot(spks(spikeEnergies>energycutoff,:)', 'r', 'LineWidth', 2)
+plot(spks(spikeEnergies<energycutoff,:)', 'k', 'LineWidth', 1)
 
+figure(3311), clf, hold on, 
+plot(squeeze(mean(myspks(spikeEnergies>energycutoff,1,:),1))', 'r', 'LineWidth', 2)
+plot(squeeze(mean(myspks(spikeEnergies<energycutoff,1,:),1))', 'k', 'LineWidth', 1)
+reflinexy(border,200);
 
-%%
-PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(PIS(:,10)>0,41:end,:)));
-figure(008008), clf, hold on,
-h = plot(squeeze(PopPSTHSacTrigMean)');
-PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(PIS(:,10)<0,41:end,:)));
-hold on, 
-plot(squeeze(PopPSTHSacTrigMean)');
-set(h, 'LineWidth', 2);
-set(gca, 'XGrid', 'on');
-xlim([0 500]);
-xtl = [-100, 0, 50, 100, 250, 500];
-set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
-set(gca, 'XTickLabel', {num2str(xtl')});
-legend(h, GetLegends(FileType));
-title(FileType);
+figure(3322), clf, hold on, 
+plot(squeeze(mean(myspks(spikeEnergies>energycutoff,2,:),1))', 'r', 'LineWidth', 2)
+plot(squeeze(mean(myspks(spikeEnergies<energycutoff,2,:),1))', 'k', 'LineWidth', 1)
+reflinexy(border,200);
 
+figure(3333), clf, hold on, 
+plot(squeeze(mean(myspks(spikeEnergies>energycutoff,3,:),1))', 'r', 'LineWidth', 2)
+plot(squeeze(mean(myspks(spikeEnergies<energycutoff,3,:),1))', 'k', 'LineWidth', 1)
+reflinexy(border,200);
 
-%%
-selector = [1:1:34];
-selector(88)=0;
-PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean((TI>0) & (selector > 0) , 41:42,:)));
-figure(010010), clf, hold on,
-h = plot(squeeze(PopPSTHSacTrigMean)');
-PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean((TI<0) & (selector > 0) , 41:42,:)));
-hold on, 
-plot(squeeze(PopPSTHSacTrigMean)');
-set(h, 'LineWidth', 2);
-set(gca, 'XGrid', 'on');
-xlim([0 500]);
-xtl = [-100, 0, 50, 100, 250, 500];
-set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
-set(gca, 'XTickLabel', {num2str(xtl')});
-legend(h, GetLegends(FileType));
-title(FileType);
-
-
-%%
-figure(8392), clf , hold on,
-a(:,1) = squeeze(mean(tPSTHSacTrigMean(TI>0,41,:)));
-a(:,2) = squeeze(mean(tPSTHSacTrigMean(TI<0,41,:)));
-
-a(:,3) = squeeze(mean(tPSTHSacTrigMean(TI>0,42,:)));
-a(:,4) = squeeze(mean(tPSTHSacTrigMean(TI<0,42,:)));
-
-h = plot(mean(a(:,[1]),2));
-h = plot(mean(a(:,[2]),2));
-h = plot(mean(a(:,[3]),2));
-h = plot(mean(a(:,[4]),2));
-h = plot(mean(a(:,[1,4]),2));
-h = plot(mean(a(:,[2,3]),2));
-
-set(h, 'LineWidth',2);
-set(gca, 'XGrid', 'on');
-xlim([0 500]);
-xtl = [-100, 0, 50, 100, 250, 500];
-set(gca, 'XTick', xtl+100-(BinSize - SmoothingBinSize)/2);
-set(gca, 'XTickLabel', {num2str(xtl')});
-legend(h, GetLegends(FileType));
-title(FileType);
+figure(3344), clf, hold on, 
+plot(squeeze(mean(myspks(spikeEnergies>energycutoff,4,:),1))', 'r', 'LineWidth', 2)
+plot(squeeze(mean(myspks(spikeEnergies<energycutoff,4,:),1))', 'k', 'LineWidth', 1)
+reflinexy(border,200);
