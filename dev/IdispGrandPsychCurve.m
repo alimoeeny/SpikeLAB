@@ -1,6 +1,10 @@
 clc;
 clear;
-DataPath = '/bgc/data/';
+DataPath = GetDataPath();
+
+
+ShowSingleCellSDFs = 0; % 0 or 1
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
 
 % Psych
 % AllPsychData = importdata('AllDaedalusPsychDays.txt');
@@ -18,11 +22,11 @@ DataPath = '/bgc/data/';
 %  StimulusType = 'cylinder';
 
 % % DID
-load('../AllDIDNeurons.mat');
-AllNeurons = AllDIDNeurons;
-clear AllDIDNeurons;
-FileType = 'DID';
-StimulusType = 'cylinder';
+% load('../AllDIDNeurons.mat');
+% AllNeurons = AllDIDNeurons;
+% clear AllDIDNeurons;
+% FileType = 'DID';
+% StimulusType = 'cylinder';
 
 % load('/Users/ali/DropBox/Projects/BCode/AllTWONeurons.mat');
 % AllNeurons = AllTWONeurons;

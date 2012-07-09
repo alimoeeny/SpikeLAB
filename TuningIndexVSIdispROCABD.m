@@ -4,8 +4,10 @@
 
 clear;
 clc
-cd /Users/moeenya/Dropbox/Projects/SpikeLAB/dev
 
+ShowSingleCellSDFs = 0; % 0 or 1
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+%Prep
 DataPath = GetDataPath();
 
 FinishTime = 0;
@@ -27,8 +29,8 @@ doitsquare = 0;
 % clear AllDIDNeurons
 % FileType = 'DID';
 % StimulusType = 'cylinder';
-% StartTime  = 10000; %10000; % 6500; 
-% FinishTime = 20000;
+StartTime  = 10000; %10000; % 6500; 
+FinishTime = 20000;
 
 
 % % % DIDB
@@ -50,14 +52,14 @@ doitsquare = 0;
 % StartTime  = 500; %10000; %5500; 
 % FinishTime = 20000;
 
-% % DPI Cylinder
-load('../AllPursuitNeurons.mat');
-AllNeurons = AllPursuitNeurons;
-clear AllPursuitNeurons;
-FileType = 'DPI';
-StimulusType = 'cylinder';
-StartTime  = 500;% 10000; %500; %10000; 
-FinishTime = 20000;
+% % % DPI Cylinder
+% load('../AllPursuitNeurons.mat');
+% AllNeurons = AllPursuitNeurons;
+% clear AllPursuitNeurons;
+% FileType = 'DPI';
+% StimulusType = 'cylinder';
+% StartTime  = 500;% 10000; %500; %10000; 
+% FinishTime = 20000;
 
 
 % % DPI rds
@@ -641,6 +643,9 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     
     binoc{iN} = Expt.Stimvals.ve;
 end
+
+%%   
+save ~/Desktop/matlab.mat -v7.3
 
 %%
 if strcmpi(FileType, 'DID')

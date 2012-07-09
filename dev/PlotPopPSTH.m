@@ -2,7 +2,7 @@ clear;
 %clc;
 
 ShowSingleCellSDFs = 0; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('BDID');
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
 %Prep
 DataPath = GetDataPath();
 BinSize = 1;%50;
