@@ -416,9 +416,9 @@ switch upper(FileType)
             conditions(3,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToNegative;%7
             conditions(4,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToPositive;%8
             conditions(5,:) = [Expt.Trials(:).Id]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToPositive;%10
-            conditions(6,:)= [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToNegative;%12
+            conditions(6,:) = [Expt.Trials(:).Id]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]==ResponseToNegative;%12
             conditions(7,:) = [Expt.Trials(:).dx]== min([Expt.Trials(:).dx]) & [Expt.Trials(:).RespDir]~=0;
-            conditions(8,:)= [Expt.Trials(:).dx]== max([Expt.Trials(:).dx]) & [Expt.Trials(:).RespDir]~=0;
+            conditions(8,:) = [Expt.Trials(:).dx]== max([Expt.Trials(:).dx]) & [Expt.Trials(:).RespDir]~=0;
             % 9, 10 are to be used with 11 ,12  for zscored CP calculation
             conditions(9,:)= [Expt.Trials(:).dx]> min([Expt.Trials(:).dx]) & [Expt.Trials(:).dx]< 0 & TP & [Expt.Trials(:).RespDir]==ResponseToNegative;
             conditions(10,:)=[Expt.Trials(:).dx]> min([Expt.Trials(:).dx]) & [Expt.Trials(:).dx]< 0 & TP & [Expt.Trials(:).RespDir]==ResponseToPositive;

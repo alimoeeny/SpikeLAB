@@ -1,13 +1,16 @@
 clear;
 %clc;
 
-ShowSingleCellSDFs = 0; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('BDID');
+ShowSingleCellSDFs = 1; % 0 or 1
+SavePlotstoDisk = 1;
+
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+
 %Prep
 DataPath = GetDataPath();
-BinSize = 1;%50;
-SmoothingBinSize = 1;%50
-SmthKernel = gausswin(SmoothingBinSize);
+BinSize = 50;%50;
+% SmoothingBinSize = 50;%50
+% SmthKernel = gausswin(SmoothingBinSize);
 
 
 filenamesforbruce = {};
@@ -21,6 +24,8 @@ TI=[];
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 
 SacBars = {};
+slp = [];
+vs = [];
 %par
 for iN= 1: length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
@@ -34,24 +39,24 @@ for iN= 1: length(AllNeurons)
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %if (abs(TI(iN))>0.1)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
-                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, SavePlotstoDisk);
                 %[c, eb] = PlotISISdf(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, 1);
                 slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx'); 
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
             %end
         case 'BDID'
-            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, SavePlotstoDisk);
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd'); 
             %disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
         case 'TWO'
-            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, SavePlotstoDisk);
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
         case 'DPI'
             ti      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], 1);
             %[p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+            [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, SavePlotstoDisk);
             %[pSacM, pSacSe, pSacPrj] = PlotSaccades(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType);
             %SacBars{iN} = [pSacM , pSacSe, pSacPrj];
             
@@ -86,7 +91,7 @@ end
 
 
 %%   
-save ~/Desktop/matlab.mat -v7.3
+save(['~/Desktop/matlab', num2str(now), '.mat'], '-v7.3')
 
 %%
 validCells = []; for i = 1: length(PSTHs), if~isempty(PSTHs{i}), validCells(i) = [PSTHs{i}{4}]; end; end

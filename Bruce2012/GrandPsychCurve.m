@@ -1,65 +1,18 @@
 clc;
 clear;
-DataPath = '/bgc/data/';
 
-% Psych
-% AllPsychData = importdata('AllDaedalusPsychDays.txt');
-% AllNeurons = AllPsychData;
-% clear AllPsychdata;
-% FileType = 'psych';
-% StimulusType = 'cylinder';
+DataPath = GetDataPath();
+ShowSingleCellPlots = 1; % 0 or 1
+SavePlotstoDisk = 0;
 
 
-% ABD
-%  load('/Users/ali/DropBox/Projects/BCode/AllABDNeurons.mat');
-%  AllNeurons = AllABDNeurons;
-%  clear AllABDNeurons;
-%  FileType = 'ABD';
-%  StimulusType = 'cylinder';
-
-% % DID
-load('../AllDIDNeurons.mat');
-AllNeurons = AllDIDNeurons;
-clear AllDIDNeurons;
-FileType = 'DID';
-StimulusType = 'cylinder';
-
-% load('/Users/ali/DropBox/Projects/BCode/AllTWONeurons.mat');
-% AllNeurons = AllTWONeurons;
-% clear AllTWONeurons;
-% FileType = 'TWO';
-% StimulusType = 'cylinder';
-
-% TWO
-% load('/Users/ali/DropBox/Projects/BCode/AllTWONeurons.mat');
-% AllNeurons = AllTWONeurons;
-% clear AllTWOPsychDays;
-% FileType = 'TWO';
-% StimulusType = 'cylinder';
-
-% PSYCH TWO
-% load('/Users/ali/DropBox/Projects/BCode/AllTWOPsychDays.mat');
-% AllNeurons = AllTWOPsychDays;
-% clear AllTWOPsychDays;
-% FileType = 'TWOPsych';
-% StimulusType = 'cylinder';
-
-% BD DID psych
-% AllNeurons = {'/bgc/data/psych/dae/TwoCylF07Jun2010'};
-% FileType = 'BDpsych';
-% StimulusType = 'cylinder';
-
-% load('/Users/ali/DropBox/Projects/BCode/AllRIDNeurons.mat');
-% AllNeurons = AllRIDNeurons;
-% clear AllRIDNeurons;
-% FileType = 'RID';
-% StimulusType = 'rds';
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
 
 
 StartTime = 5500; 
-FinishTime = 0; 
+FinishTime = 0;  
 
-%SelectedNeurons = 1:length(AllNeurons); 
+%SelectedNeurons = 1:length(AllNeuro ns); 
 %par
 for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:length(AllNeurons), 
     NeuronNumber = AllNeurons(iN);
@@ -235,11 +188,32 @@ for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:len
     Grands{iN} = Grand;
     dxsz{iN} = dxss;
     Trialz{iN} = trials;
+    
+    if (ShowSingleCellPlots)
+      hp = figure(17348); 
+      red  = [1,2,3,5,6];
+      blue = [1,2,4,5,6];
+      
+      r_ = [];
+      gg = 0;
+      for g = [1 2 5 6]
+        gg = gg + 1;
+        r_(gg).x = dxss(g);
+        r_(gg).n = trials(g);
+        r_(gg).resp = Grand(g);
+      end
+      figure(11011), clf,
+      psf = fitpsf(r_, 'showfit');
+      
+    end
+    if(SavePlotstoDisk)
+      print(hp, '-dpsc', '-r300', '-zbuffer', ['../figs/PSTH', '-', date, '-', filename, '.eps']);
+    end
 end
 
 %% Grand 
 
-figure,
+figure(1438), clf, hold on
 i=0;
 for ii = 1:length(Grands)
   if ~isempty(Grands{ii})
@@ -310,6 +284,7 @@ end
 errorbar(ghm ,ghv, 'b');
 
 %% Only correctly biased sessions
+figure(1843), clf, hold on
 ggm = [mean(g1), mean(g2), mean(g3), mean(g5), mean(g6)];
 ggv = [std(g1) /sqrt(i) , std(g2) /sqrt(i), std(g3) /sqrt(i), std(g5) /sqrt(i), std(g6) /sqrt(i)];
 errorbar(ggm, ggv, 'r');
@@ -324,7 +299,7 @@ errorbar(ghm ,ghv, 'b');
 %%
 load ../ScatterColors.mat
 if strcmp(FileType,'TWO')
-    figure, 
+    figure(1483), clf, hold on
     scatter(((g1 - g11)), g3 - g4, [], colors(1:length(g3-g4),:), 'filled');    
     hold on, 
     scatter(((g12 - g6)), g3 - g4, [], colors(1:length(g3-g4),:), 'filled');
