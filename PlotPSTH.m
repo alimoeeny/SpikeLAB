@@ -192,7 +192,7 @@ if(PlotIt)
             legend('Pref Or Pref dx','Pref Or null dx','Null Or Pref dx ','null Or null dx');
         case 'DID'
             disp(['Max dx:', num2str(max([Expt.Trials(:).dx])), ' - Ids are: ' , num2str(unique([Expt.Trials(:).Id]))]);
-            trialcombos = [1,2,7,8];
+            trialcombos = [3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
             hp = figure(18719); h = plot(eb(trialcombos,:)'); % plot(eb'); %plot(eb([2,4,6],:)');
             leg = GetLegends(FileType);
             legend(h, leg(trialcombos));

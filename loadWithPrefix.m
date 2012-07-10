@@ -6,8 +6,6 @@ function loadWithPrefix(matFileName, prefix)
             %
         else
             disp([allVariables{i} ' -> ' prefix allVariables{i}]);
-            %evalin('base', ['global ' prefix allVariables{i}]);
             eval(['assignin(''base'', [prefix allVariables{i}] ,' allVariables{i} ');']);
-            %eval(['clear ' allVariables{i}]);
         end
     end

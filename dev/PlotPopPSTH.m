@@ -1,7 +1,7 @@
 clear;
 %clc;
 
-ShowSingleCellSDFs = 0; % 0 or 1
+ShowSingleCellSDFs = 1; % 0 or 1
 [AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
 %Prep
 DataPath = GetDataPath();
@@ -34,7 +34,7 @@ for iN= 1: length(AllNeurons)
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %if (abs(TI(iN))>0.1)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
-                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
                 %[c, eb] = PlotISISdf(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, 1);
                 slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx'); 
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
@@ -86,7 +86,7 @@ end
 
 
 %%   
-save ~/Desktop/matlab.mat -v7.3
+save(['~/Desktop/matlab.' num2str(now) '.mat'], '-v7.3')
 
 %%
 validCells = []; for i = 1: length(PSTHs), if~isempty(PSTHs{i}), validCells(i) = [PSTHs{i}{4}]; end; end

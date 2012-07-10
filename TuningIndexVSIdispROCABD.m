@@ -501,18 +501,22 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         
         mtn = 4; % minimum trials needed
         aa = []; bb = [];
+        % basic CP in zero disparity trials with null id
         if ((sum(conditions(24,:))>=mtn) && ((sum(conditions(25,:))>=mtn) )) , 
             aa = [aa; zpId(1:sum(conditions(24,:)))]; 
             bb = [bb; zpId(sum(conditions(24,:))+1:sum(conditions(24,:))+sum(conditions(25,:)))]; 
         end
+        % basic CP in zero disparity trials with pref id
         if ((sum(conditions(26,:))>=mtn) && ((sum(conditions(27,:))>=mtn) )) , 
             aa = [aa; znId(1:sum(conditions(26,:)))]; 
             bb = [bb; znId(sum(conditions(26,:))+1:sum(conditions(26,:))+sum(conditions(27,:)))]; 
         end
+        %CP in next to zero dx trials with null DX (no id here)
         if ((sum(conditions(16,:))>=mtn) && ((sum(conditions(17,:))>=mtn) )) , 
             aa = [aa; pdx(1:sum(conditions(16,:)))]; 
             bb = [bb; pdx(sum(conditions(16,:))+1:sum(conditions(16,:))+sum(conditions(17,:)))]; 
         end
+        %CP in next to zero dx trials with pref DX (no id here)
         if ((sum(conditions(18,:))>=mtn) && ((sum(conditions(19,:))>=mtn) )) , 
             aa = [aa; ndx(1:sum(conditions(18,:)))]; 
             bb = [bb; ndx(sum(conditions(18,:))+1:sum(conditions(18,:))+sum(conditions(19,:)))]; 
@@ -645,7 +649,7 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
 end
 
 %%   
-save ~/Desktop/matlab.mat -v7.3
+save(['~/Desktop/matlab.' num2str(now) '.mat'], '-v7.3')
 
 %%
 if strcmpi(FileType, 'DID')
@@ -712,7 +716,22 @@ if strcmpi(FileType, 'DID')
     reflinexy(0.5,1);
     xlabel('Grand CP');
     ylabel('Idisp Effect');
-
+    
+    figure(9669), clf, hold on,
+    scatterhist(GrandCP(GrandCP>0), IdBiasROC1(GrandCP>0), ...
+                      'NBins' , [20, 20], ...
+                      'Location', 'SouthEast', ...
+                      'Direction' , 'out');
+    xlim([0,1]);
+    ylim([0,1]);
+    refline(1);
+    refline(0,0.5);
+    reflinexy(0.5,1);
+    xlabel('Grand CP');
+    ylabel('Idisp Effect');
+    [r, p] = corr(GrandCP(GrandCP>0)', IdBiasROC1(GrandCP>0)');
+    text(0.05,0.9, ['Correlation  r:  ' num2str(r) '   p: ' num2str(p)]);
+    
 end
 
 %% DPI 
