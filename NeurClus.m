@@ -1,16 +1,22 @@
 function [m, n, c] = NeurClus(NN)
 switch NN{1}(1)
     case 'd'
-        NNN = str2num(NN{1}(4:end));
         m = 'dae';
+        if (NN{1}(length(m)+1)=='M')
+            n = str2num(NN{1}(length(m)+2:end));
+            c = [];
+            return
+        else
+            NNN = str2num(NN{1}(4:end));
+        end
         
     case 'i'
-        NNN = str2num(NN{1}(3:end));
         m = 'icarus';
+        NNN = str2num(NN{1}(3:end));
         
     case 't'
-        NNN = str2num(NN{1}(4:end));
         m = 'test';
+        NNN = str2num(NN{1}(4:end));
         
 end
 

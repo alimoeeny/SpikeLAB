@@ -490,6 +490,48 @@ switch upper(FileType)
             conditions(27,:)= [Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir]==ResponseToNegative;
             
         end
+        case {'DTRW'}
+            if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
+                ResponseToPositive = 1;
+                ResponseToNegative = -1;
+            else
+                ResponseToPositive = -1;
+                ResponseToNegative = 1;
+            end
+            TP = NotDoingVeryGood(Expt);
+            %rwmin = min([Expt.Trials(:).rw]);
+            %rwmax = max([Expt.Trials(:).rw]);
+            rws = unique([Expt.Trials.rw]);
+            rwmin = rws(1);
+            rwmax = rws(3);
+            rwmid = rws(2);
+            if(PrefCyldx == 2) % DID , ...
+                conditions(1,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmin & [Expt.Trials(:).RespDir]~=0;
+                conditions(2,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmid & [Expt.Trials(:).RespDir]~=0;
+                conditions(3,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmax & [Expt.Trials(:).RespDir]~=0;
+
+                conditions(4,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmin & [Expt.Trials(:).RespDir]~=0;
+                conditions(5,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmid & [Expt.Trials(:).RespDir]~=0;
+                conditions(6,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmax & [Expt.Trials(:).RespDir]~=0;
+                
+                conditions(7,:) = [Expt.Trials(:).RespDir] == ResponseToNegative;
+                conditions(8,:) = [Expt.Trials(:).RespDir] == ResponseToPositive;
+                conditions(9,:) = [Expt.Trials(:).RespDir] == 0;
+                
+            else
+                conditions(1,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmin & [Expt.Trials(:).RespDir]~=0;
+                conditions(2,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmid & [Expt.Trials(:).RespDir]~=0;
+                conditions(3,:) = [Expt.Trials(:).dx]>0 & [Expt.Trials(:).rw]==rwmax & [Expt.Trials(:).RespDir]~=0;
+                
+                conditions(4,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmin & [Expt.Trials(:).RespDir]~=0;
+                conditions(5,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmid & [Expt.Trials(:).RespDir]~=0;
+                conditions(6,:) = [Expt.Trials(:).dx]<0 & [Expt.Trials(:).rw]==rwmax & [Expt.Trials(:).RespDir]~=0;
+                
+                conditions(7,:) = [Expt.Trials(:).RespDir] == ResponseToPositive;
+                conditions(8,:) = [Expt.Trials(:).RespDir] == ResponseToNegative;
+                conditions(9,:) = [Expt.Trials(:).RespDir] == 0;
+
+            end
     otherwise
         if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
             ResponseToPositive = 1;

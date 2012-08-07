@@ -2,9 +2,11 @@ function [p] = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, Stimu
 
     DataPath = GetDataPath();
 
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     
-    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    Neuron = load(filepath);
     Expt = Neuron.Expt;
     
     or = Expt.Stimvals.or;

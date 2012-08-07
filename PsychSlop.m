@@ -1,4 +1,4 @@
-function [slp] = PsychSlop(NeuronName, StimulusType, ExperimentType, reqparam)
+function [slp, hf] = PsychSlop(NeuronName, StimulusType, ExperimentType, reqparam, showthefit)
   
 if (nargin>3)
     %Prep
@@ -7,9 +7,11 @@ if (nargin>3)
 
     FileType = ExperimentType;
 
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    
-    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+
+    Neuron = load(filepath);
     Expt = Neuron.Expt;
 
 % if (isempty(reqparam))
@@ -71,10 +73,14 @@ for tr = 1: length(values),
     Responses(tr).resp = sum([Expt.Trials([Expt.Trials(:).(reqparam)]==values(tr)).RespDir]==ResponseToPositive);
     Responses(tr).n =  sum([Expt.Trials([Expt.Trials(:).(reqparam)]==values(tr)).RespDir]~=0);
 end
-                
-                
-%psf = fitpsf(Responses, 'showfit');
-psf = fitpsf(Responses);
+         
+hf = 0;
+if showthefit
+    hf = figure(18186); clf, hold on,
+    psf = fitpsf(Responses, 'showfit');
+else
+    psf = fitpsf(Responses);
+end
 tempResponses = [];
 for i = 1:length(psf.data)
     if (psf.data(i).p<0.9 & psf.data(i).p>0.1) 
@@ -85,7 +91,11 @@ for i = 1:length(psf.data)
     end
 end
 if (length(tempResponses)>2)
+   if showthefit
+       psf = fitpsf(tempResponses, 'showfit');
+   else
     psf = fitpsf(tempResponses);
+   end
 end
 slp = psf;
 

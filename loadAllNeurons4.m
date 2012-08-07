@@ -13,6 +13,12 @@ switch ExptType
     FileType = 'DID';
     StimulusType = 'cylinder';
     
+  case 'DTRW'
+    load('../AllDTRWNeurons.mat');
+    AllNeurons = AllDTRWNeurons;
+    FileType = 'DTRW';
+    StimulusType = 'cylinder';
+    
   case 'TWO'
     load('../AllTWONeurons.mat');
     AllNeurons = AllTWONeurons;

@@ -6,7 +6,7 @@ clear;
 clc
 
 ShowSingleCellSDFs = 0; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
 %Prep
 DataPath = GetDataPath();
 
@@ -111,8 +111,10 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], doitsquare);
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d'), ' - ' , MonkeyName));
     
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    Neuron = load(filepath);
     Expt = Neuron.Expt;
     fileNames{iN} = filename; 
     
@@ -139,7 +141,7 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         rdsPrefDir = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName);
     catch e
         rdsPrefDirFailed = 1;
-        disp('rdsPrefDir FAILED HERE ! ! ');
+        disp(['rdsPrefDir FAILED HERE ! ! ' , e.message]);
     end
     if (rdsPrefDirFailed || (length(rdsPrefDir)>1))
         rdsPrefDir = Expt.Stimvals.or;
@@ -230,11 +232,6 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
             ResponseToNegative = 1;
         end
       end    
-    
-
-        % 10/14/09 we added the [Expt.Trials(:).RespDir]~=0 to all conditions
-        % (firstly to match is with Bruces secondly to exclude those in which
-        % monkey has not taken a side. 
         if strcmp(FileType, 'TWO')
             if(pD == 2)
                 conditions(1,:) = [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=0;
@@ -450,80 +447,83 @@ for iN= [1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
         IdBiasROCSig(iN) = pp;
         ROCpairs1{iN} = {SpikeCounts(conditions(1,:)), SpikeCounts(conditions(2,:))};
         
-        Next2ZeroROC1(iN) = ROCAUC(SpikeCounts(conditions(13,:)), SpikeCounts(conditions(14,:)));
-        % next to zero z scored
+        if(~strcmpi(FileType, 'TWO'))
+            Next2ZeroROC1(iN) = ROCAUC(SpikeCounts(conditions(13,:)), SpikeCounts(conditions(14,:)));
+            % next to zero z scored
+            
+            a = zscore([SpikeCounts(conditions(16,:)); SpikeCounts(conditions(17,:))]);
+            b = zscore([SpikeCounts(conditions(18,:)); SpikeCounts(conditions(19,:))]);
+            aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
+            bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
+            Next2ZeroROCZScored(iN) = ROCAUC(aa, bb);
+            Next2ZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(16,:)), SpikeCounts(conditions(17,:)));
+            Next2ZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(18,:)), SpikeCounts(conditions(19,:)));
+            w1 = min(sum(conditions(16,:)),sum(conditions(17,:))); if (w1==0), w1 = max(sum(conditions(16,:)),sum(conditions(17,:))); end
+            w2 = min(sum(conditions(18,:)),sum(conditions(19,:))); if (w2==0), w2 = max(sum(conditions(18,:)),sum(conditions(19,:))); end
+            if (Next2ZeroROCPref(iN) == -1)
+                Next2ZeroROCPNWeigh(iN) = Next2ZeroROCNull(iN);
+            else
+                Next2ZeroROCPNWeigh(iN) = Next2ZeroROCPref(iN);
+            end
+            if ((Next2ZeroROCPref(iN) ~= -1) && (Next2ZeroROCNull(iN) ~= -1))
+                Next2ZeroROCPNWeigh(iN)= ((Next2ZeroROCPref(iN) * w1) + (Next2ZeroROCNull(iN) * w2)) / (w1 + w2);
+            end
         
-        a = zscore([SpikeCounts(conditions(16,:)); SpikeCounts(conditions(17,:))]);
-        b = zscore([SpikeCounts(conditions(18,:)); SpikeCounts(conditions(19,:))]);
-        aa = [a(1 : sum(conditions(16,:))) ; b(1 : sum(conditions(18,:)))];
-        bb = [a(sum(conditions(16,:))+1 : sum(conditions(16,:))+sum(conditions(17,:))) ; b(sum(conditions(18,:))+1 : sum(conditions(18,:))+sum(conditions(19,:)))];
-        Next2ZeroROCZScored(iN) = ROCAUC(aa, bb);
-        Next2ZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(16,:)), SpikeCounts(conditions(17,:)));
-        Next2ZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(18,:)), SpikeCounts(conditions(19,:)));
-        w1 = min(sum(conditions(16,:)),sum(conditions(17,:))); if (w1==0), w1 = max(sum(conditions(16,:)),sum(conditions(17,:))); end
-        w2 = min(sum(conditions(18,:)),sum(conditions(19,:))); if (w2==0), w2 = max(sum(conditions(18,:)),sum(conditions(19,:))); end
-        if (Next2ZeroROCPref(iN) == -1)
-            Next2ZeroROCPNWeigh(iN) = Next2ZeroROCNull(iN);
-        else 
-            Next2ZeroROCPNWeigh(iN) = Next2ZeroROCPref(iN);
+        
+            
+            % Z-scored CP
+            a = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:))]);
+            b = zscore([SpikeCounts(conditions(26,:)); SpikeCounts(conditions(27,:))]);
+            aa = [a(1 : sum(conditions(24,:))) ; b(1 : sum(conditions(26,:)))];
+            bb = [a(sum(conditions(24,:))+1 : sum(conditions(24,:))+sum(conditions(25,:))) ; b(sum(conditions(26,:))+1 : sum(conditions(26,:))+sum(conditions(27,:)))];
+            CPatZeroROCZScored(iN) = ROCAUC(aa, bb);
+            CPatZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(24,:)), SpikeCounts(conditions(25,:)));
+            CPatZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(26,:)), SpikeCounts(conditions(27,:)));
+            w1 = min(sum(conditions(24,:)),sum(conditions(25,:))); if (w1==0), w1 = max(sum(conditions(24,:)),sum(conditions(25,:))); end
+            w2 = min(sum(conditions(26,:)),sum(conditions(27,:))); if (w2==0), w2 = max(sum(conditions(26,:)),sum(conditions(27,:))); end
+            if (CPatZeroROCPref(iN) == -1)
+                CPatZeroROCPNWeigh(iN) = CPatZeroROCNull(iN);
+            else
+                CPatZeroROCPNWeigh(iN) = CPatZeroROCPref(iN);
+            end
+            if ((CPatZeroROCPref(iN) ~= -1) && (CPatZeroROCNull(iN) ~= -1))
+                CPatZeroROCPNWeigh(iN)= ((CPatZeroROCPref(iN) * w1) + (CPatZeroROCNull(iN) * w2)) / (w1 + w2);
+            end
+            
+            
+            % FINAL CP
+            zpId = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:))]);
+            znId = zscore([SpikeCounts(conditions(26,:)); SpikeCounts(conditions(27,:))]);
+            pdx  = zscore([SpikeCounts(conditions(16,:)); SpikeCounts(conditions(17,:))]);
+            ndx  = zscore([SpikeCounts(conditions(18,:)); SpikeCounts(conditions(19,:))]);
+            
+            mtn = 4; % minimum trials needed
+            aa = []; bb = [];
+            % basic CP in zero disparity trials with null id
+            if ((sum(conditions(24,:))>=mtn) && ((sum(conditions(25,:))>=mtn) )) ,
+                aa = [aa; zpId(1:sum(conditions(24,:)))];
+                bb = [bb; zpId(sum(conditions(24,:))+1:sum(conditions(24,:))+sum(conditions(25,:)))];
+            end
+            % basic CP in zero disparity trials with pref id
+            if ((sum(conditions(26,:))>=mtn) && ((sum(conditions(27,:))>=mtn) )) ,
+                aa = [aa; znId(1:sum(conditions(26,:)))];
+                bb = [bb; znId(sum(conditions(26,:))+1:sum(conditions(26,:))+sum(conditions(27,:)))];
+            end
+            %CP in next to zero dx trials with null DX (no id here)
+            if ((sum(conditions(16,:))>=mtn) && ((sum(conditions(17,:))>=mtn) )) ,
+                aa = [aa; pdx(1:sum(conditions(16,:)))];
+                bb = [bb; pdx(sum(conditions(16,:))+1:sum(conditions(16,:))+sum(conditions(17,:)))];
+            end
+            %CP in next to zero dx trials with pref DX (no id here)
+            if ((sum(conditions(18,:))>=mtn) && ((sum(conditions(19,:))>=mtn) )) ,
+                aa = [aa; ndx(1:sum(conditions(18,:)))];
+                bb = [bb; ndx(sum(conditions(18,:))+1:sum(conditions(18,:))+sum(conditions(19,:)))];
+            end
+            
+            GrandCP(iN) = ROCAUC(aa, bb);
         end
-        if ((Next2ZeroROCPref(iN) ~= -1) && (Next2ZeroROCNull(iN) ~= -1))
-            Next2ZeroROCPNWeigh(iN)= ((Next2ZeroROCPref(iN) * w1) + (Next2ZeroROCNull(iN) * w2)) / (w1 + w2);
-        end
-
+        
         orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-        
-        % Z-scored CP
-        a = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:))]);
-        b = zscore([SpikeCounts(conditions(26,:)); SpikeCounts(conditions(27,:))]);
-        aa = [a(1 : sum(conditions(24,:))) ; b(1 : sum(conditions(26,:)))];
-        bb = [a(sum(conditions(24,:))+1 : sum(conditions(24,:))+sum(conditions(25,:))) ; b(sum(conditions(26,:))+1 : sum(conditions(26,:))+sum(conditions(27,:)))];
-        CPatZeroROCZScored(iN) = ROCAUC(aa, bb);
-        CPatZeroROCPref(iN) = ROCAUC(SpikeCounts(conditions(24,:)), SpikeCounts(conditions(25,:)));
-        CPatZeroROCNull(iN) = ROCAUC(SpikeCounts(conditions(26,:)), SpikeCounts(conditions(27,:)));
-        w1 = min(sum(conditions(24,:)),sum(conditions(25,:))); if (w1==0), w1 = max(sum(conditions(24,:)),sum(conditions(25,:))); end
-        w2 = min(sum(conditions(26,:)),sum(conditions(27,:))); if (w2==0), w2 = max(sum(conditions(26,:)),sum(conditions(27,:))); end
-        if (CPatZeroROCPref(iN) == -1)
-            CPatZeroROCPNWeigh(iN) = CPatZeroROCNull(iN);
-        else 
-            CPatZeroROCPNWeigh(iN) = CPatZeroROCPref(iN);
-        end
-        if ((CPatZeroROCPref(iN) ~= -1) && (CPatZeroROCNull(iN) ~= -1))
-            CPatZeroROCPNWeigh(iN)= ((CPatZeroROCPref(iN) * w1) + (CPatZeroROCNull(iN) * w2)) / (w1 + w2);
-        end
-        
-        
-        % FINAL CP
-        zpId = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:))]);
-        znId = zscore([SpikeCounts(conditions(26,:)); SpikeCounts(conditions(27,:))]);
-        pdx  = zscore([SpikeCounts(conditions(16,:)); SpikeCounts(conditions(17,:))]);
-        ndx  = zscore([SpikeCounts(conditions(18,:)); SpikeCounts(conditions(19,:))]);
-        
-        mtn = 4; % minimum trials needed
-        aa = []; bb = [];
-        % basic CP in zero disparity trials with null id
-        if ((sum(conditions(24,:))>=mtn) && ((sum(conditions(25,:))>=mtn) )) , 
-            aa = [aa; zpId(1:sum(conditions(24,:)))]; 
-            bb = [bb; zpId(sum(conditions(24,:))+1:sum(conditions(24,:))+sum(conditions(25,:)))]; 
-        end
-        % basic CP in zero disparity trials with pref id
-        if ((sum(conditions(26,:))>=mtn) && ((sum(conditions(27,:))>=mtn) )) , 
-            aa = [aa; znId(1:sum(conditions(26,:)))]; 
-            bb = [bb; znId(sum(conditions(26,:))+1:sum(conditions(26,:))+sum(conditions(27,:)))]; 
-        end
-        %CP in next to zero dx trials with null DX (no id here)
-        if ((sum(conditions(16,:))>=mtn) && ((sum(conditions(17,:))>=mtn) )) , 
-            aa = [aa; pdx(1:sum(conditions(16,:)))]; 
-            bb = [bb; pdx(sum(conditions(16,:))+1:sum(conditions(16,:))+sum(conditions(17,:)))]; 
-        end
-        %CP in next to zero dx trials with pref DX (no id here)
-        if ((sum(conditions(18,:))>=mtn) && ((sum(conditions(19,:))>=mtn) )) , 
-            aa = [aa; ndx(1:sum(conditions(18,:)))]; 
-            bb = [bb; ndx(sum(conditions(18,:))+1:sum(conditions(18,:))+sum(conditions(19,:)))]; 
-        end
-
-        GrandCP(iN) = ROCAUC(aa, bb);
-        
         
     end
     switch FileType
@@ -902,6 +902,7 @@ switch(upper(FileType))
     case 'TWO'
         figure(190), clf, clickscatter(IdBiasROC1, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
         refline(0, 0.5);
+        reflinexy(0.5, 1);
         ylabel('Flip ROC');
         xlabel('Main ROC');
         ylim([0.3 0.8]);
@@ -911,6 +912,7 @@ switch(upper(FileType))
         figure(842), clf, 
         clickscatter(RFproximity, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
         refline(0, 0.5);
+        reflinexy(0.5, 1);
         ylabel('Flip ROC');
         xlabel('RF proximity');
         ylim([0.3 0.8]);

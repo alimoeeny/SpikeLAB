@@ -3,8 +3,9 @@ clear;
 DataPath = GetDataPath();
 
 
-ShowSingleCellSDFs = 0; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+ShowIndividualPlots = 0; % 0 or 1
+SaveIndividualPlots = 0; % 0 or 1
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
 
 % Psych
 % AllPsychData = importdata('AllDaedalusPsychDays.txt');
@@ -66,15 +67,18 @@ FinishTime = 0;
 %SelectedNeurons = 1:length(AllNeurons); 
 %par
 for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:length(AllNeurons), 
-    NeuronNumber = AllNeurons(iN);
-    [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronNumber); 
+    NeuronName = AllNeurons(iN);
+    [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronName); 
     disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
 
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat'); 
+%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat'); 
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+
     if(~isempty(strfind(FileType, 'psych')) || strcmp(FileType, 'TWOPsych'))
         Expt = PsychMon(strcat(AllNeurons{iN}),'getexpt'); 
     else
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
     end
     if isempty(Expt)
@@ -239,6 +243,15 @@ for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:len
     Grands{iN} = Grand;
     dxsz{iN} = dxss;
     Trialz{iN} = trials;
+    
+    if ShowIndividualPlots
+        [slp,hp] = PsychSlop(NeuronName, StimulusType, FileType, 'dx', 1);
+    end
+    
+    if SaveIndividualPlots
+         print(hp, '-dpsc', '-r150', '-zbuffer', ['../figs/psych', '-', date, '-', filename, '.eps']);
+    end
+    
 end
 
 %% Grand 

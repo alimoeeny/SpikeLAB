@@ -2,10 +2,10 @@ function [TI] = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType,
 % Gets the Tuning Index of the cell  based on the average firing rate  
 
 if doitsquare
-    disp('going SQUARE');
+    disp('going Square');
 end
 
-DataPath = GetDataPath();
+DataPaths = GetDataPath();
 
 FileType = ExperimentType;
 switch FileType
@@ -17,16 +17,17 @@ switch FileType
         end
 
     otherwise
-        filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    
+        filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType);
+        filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType);
 end
 
-if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2)
+if ((exist(strcat(DataPaths{1}, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2) ...
+    && (exist(strcat(DataPaths{2}, MonkeyName, '/M', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2))
     TI = -999;
     return
 end
 
-Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+Neuron = load(filepath);
 Expt = Neuron.Expt;
 
 if( (nargin<6) || isempty(reqparam))

@@ -35,8 +35,10 @@ else
     if (size(varargin,2) > 2)
         if(strcmpi(varargin{3}, 'forced')==0)
            if strcmpi(FileType, 'DPI')
-                filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', 'ABD.mat');
-                if(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename),'file')==2)
+                %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', 'ABD.mat');
+                filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+                filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+                if(exist(filepath,'file')==2)
                     FileType = 'ABD';
                 end
            end
@@ -52,8 +54,10 @@ else
         IncludeZero = 1;
     end
 
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    
+    %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+
 %     if ~isempty(strfind(FileType, 'RID'))
 %         filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', 'DRID','.mat');
 %         if(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename),'file')~=2)
@@ -61,13 +65,14 @@ else
 %         end
 %     end
 
-    if(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename),'file')~=2)
+    if(exist(filepath,'file')~=2)
         pd = -1;
         disp(['FILE NOT FOUND - THERE IS A PROBLEM HERE! ! !', strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)]);
         return;
     end
 
-    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    %Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    Neuron = load(filepath);
     Expt = Neuron.Expt;
 end
 

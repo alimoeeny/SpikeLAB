@@ -6,7 +6,7 @@ ShowSingleCellPlots = 1; % 0 or 1
 SavePlotstoDisk = 0;
 
 
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
 
 
 StartTime = 5500; 

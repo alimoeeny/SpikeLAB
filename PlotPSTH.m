@@ -13,9 +13,12 @@ if(nargin==1)
     Cumulative = 0;
 else
     DataPath = GetDataPath();
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-
-    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+%    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+ 
+    Neuron = load(filepath);
     Expt = Neuron.Expt;
 
 
@@ -192,13 +195,15 @@ if(PlotIt)
             legend('Pref Or Pref dx','Pref Or null dx','Null Or Pref dx ','null Or null dx');
         case 'DID'
             disp(['Max dx:', num2str(max([Expt.Trials(:).dx])), ' - Ids are: ' , num2str(unique([Expt.Trials(:).Id]))]);
-            trialcombos = [3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
+            trialcombos = [1,2];% [1, 2, 15]; %[3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
             hp = figure(18719); h = plot(eb(trialcombos,:)'); % plot(eb'); %plot(eb([2,4,6],:)');
             leg = GetLegends(FileType);
             legend(h, leg(trialcombos));
         case 'TWO'
-            figure,h = plot(eb');
-            legend('Pref bd Pref dx', 'Pref bd null dx','Pref bd ZERO dx', 'Pref bd ZERO dx and correct response', 'null bd ZERO dx', 'null bd ZERO dx correct response');
+            trialcombos = [3,6]; %[1:size(eb,1)];
+            hp = figure(13719); clf; h = plot(eb(trialcombos,:)');
+            leg = GetLegends(FileType);
+            legend(h, leg(trialcombos));
         case 'BDID'
             trialcombos = [7,8];
             hp = figure(17819); h = plot(eb(trialcombos,:)');
@@ -208,6 +213,12 @@ if(PlotIt)
             figure(16919), h = plot(eb');
             legend(h, GetLegends(FileType));
             refline(0);
+        case 'DTRW'
+            disp(['Max dx:', num2str(max([Expt.Trials(:).dx])), ' - Rewards are: ' , num2str(unique([Expt.Trials(:).rw]))]);
+            trialcombos = [1:size(eb,1)];% [1, 2, 15]; %[3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
+            hp = figure(12719); h = plot(eb(trialcombos,:)'); % plot(eb'); %plot(eb([2,4,6],:)');
+            leg = GetLegends(FileType);
+            legend(h, leg(trialcombos));
         otherwise
             figure(19635),h = plot(eb');
             legend(h, GetLegends(FileType));
@@ -223,6 +234,11 @@ if(PlotIt)
     
     if(savetheplot)
       print(hp, '-dpsc', '-r300', '-zbuffer', ['../figs/PSTH', '-', date, '-', filename, '.eps']);
+      
+      figure(hp+110); clf;
+      px = PlotExpt(filepath);
+      print(px.fig, '-dpsc', '-r300', '-zbuffer', ['../figs/PlotExpt', '-', date, '-', filename, '.eps']);
+      
     end
     
 %     hold on,

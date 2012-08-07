@@ -2,18 +2,20 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
 % returns the rf as a vector [x, y of the center of receptive field, width (2*sd) of rf]
     DataPath = GetDataPath();
     % Do the ParaPos
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP');
+%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
     if (~strcmpi(ClusterName, '.c1.'))
-        if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')~=2)
+        if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
-            filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
+            %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP');
         end
     end
     rfPP = [0 0 0];
     rfOP = [0 0 0];
     
-    if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')==2)
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    if (exist(filepath, 'file')==2)
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
        if isfield(Expt.Stimvals, 'Rx')
            rx = Expt.Stimvals.Rx;
@@ -35,9 +37,8 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
             rfPP = [0 0 0];
             disp('Fit Failed!')
         end
-        else
-           disp(filename);
-           disp(['Something is wrong with this experiment!', filename]);
+       else
+           disp(['Something is wrong with this experiment!', filepath]);
         end
         
     else
@@ -47,16 +48,18 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
 
     
     % Do the OrthoPos
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.OP.mat');
+    %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.OP.mat');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OP');
     if (~strcmpi(ClusterName, '.c1.'))
-        if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')~=2)
+        if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
-            filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.OP.mat');
+            %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.OP.mat');
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OP');
         end
     end
     
-    if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')==2)
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    if (exist(filepath, 'file')==2)
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
         if isfield(Expt.Stimvals, 'Rx')
            rx = Expt.Stimvals.Rx;
@@ -79,7 +82,7 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
             disp('Fit Failed!')
         end
         else
-            disp(['Something is wrong with this experiment!', filename]);
+            disp(['Something is wrong with this experiment!', filepath]);
         end
         
     else
@@ -88,16 +91,18 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
     end
     
     % Do the Size
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.SZ.mat');
+    %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.SZ.mat');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'SZ');
     if (~strcmpi(ClusterName, '.c1.'))
-        if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')~=2)
+        if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
-            filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.SZ.mat');
+            %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.SZ.mat');
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'SZ');
         end
     end
     
-    if (exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename), 'file')==2)
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    if (exist(filepath, 'file')==2)
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
         values = sort(unique([Expt.Trials(:).sz]), 'descend');
         responses = [];

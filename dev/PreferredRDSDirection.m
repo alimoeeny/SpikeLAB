@@ -3,9 +3,16 @@ function [pd] = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName)
     DataPath = GetDataPath();
     StimulusType = 'rds';
     FileType = 'OT';
-    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    if(exist(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) == 2)
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    if (~strcmpi(ClusterName, '.c1.'))
+        if (exist(filepath, 'file')~=2)
+            ClusterName = '.c1.';
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OT');
+        end
+    end
+   
+    if(exist(filepath) == 2)
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
         values = unique([Expt.Trials.(Expt.Stimvals.et)]);
         [StartTime, FinishTime] = GetStartFinishTimes(FileType);
@@ -21,8 +28,14 @@ function [pd] = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName)
         pd = find(eb==max(eb));
         pd = values(pd);
     else
-        filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.DT.mat');
-        Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
+        filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'DT');
+        if (~strcmpi(ClusterName, '.c1.'))
+            if (exist(filepath, 'file')~=2)
+                ClusterName = '.c1.';
+                filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'DT');
+            end
+        end
+        Neuron = load(filepath);
         Expt = Neuron.Expt;
         pd = Expt.Stimvals.or;
     end

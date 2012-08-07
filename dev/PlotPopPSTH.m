@@ -2,16 +2,17 @@ clear;
 %clc;
 
 ShowSingleCellSDFs = 1; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
 %Prep
-DataPath = GetDataPath();
-BinSize = 1;%50;
+DataPaths = GetDataPath();
+BinSize = 50;%50;
 SmoothingBinSize = 1;%50
 SmthKernel = gausswin(SmoothingBinSize);
 
 
 filenamesforbruce = {};
 TI=[];
+SacBars = {};
 
 % AllNeurons =  SelectByMonkey(AllNeurons, 'ic');
 % AllNeurons =  SelectByMonkey(AllNeurons, 'dae');
@@ -20,33 +21,60 @@ TI=[];
 
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 
-SacBars = {};
 %par
-for iN= 1: length(AllNeurons)
+for iN= 1 : length(AllNeurons)
     [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
-    disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
+    if(isempty(ClusterName)), ClusterName = ['cell' num2str(AllNeurons{iN,2})]; end
+    disp(['iN: ' ,num2str(iN) , ' , Neuron: ', MonkeyName, ' - ',  num2str(NeuronNumber, '%-04.3d'), ' - ', ClusterName]);
 
     p = []; c = []; eb = []; jnk1 = []; jnk2 = []; xC =[]; c1 =[]; ebX =[]; 
     pSacTrig=[]; cSacTrig=[]; ebSacTrig=[]; ebSacTrigMean = [];
     
     switch FileType 
+        case {'DTRW'} 
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
+            %if (abs(TI(iN))>0.1)
+                %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+        
         case {'ABD', 'DID', 'DRID', 'SRID', 'DIDB'} 
             TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %if (abs(TI(iN))>0.1)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
                 [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+                
+                selectRange = [1001:1750];
+                %
+                %% assuming eb(1,:) is prefid, eb(2,:) is nullid and eb(3,:) is ALLTRIALDS PUT TOGETHER [15] 
+                pPSTH = eb(1,:) - eb(3,:);
+                nPSTH = eb(3,:) - eb(2,:);
+                [polyp, polyn] = TailFits(pPSTH, nPSTH, selectRange);
+                if (ShowSingleCellSDFs)
+                    figure(6752), clf, hold on,
+                    plot(selectRange, pPSTH(selectRange), 'r-');
+                    fp = polyval(polyp, selectRange - selectRange(1));
+                    plot( selectRange, fp, '.r');
+                    
+                    plot(selectRange, nPSTH(selectRange), 'b-');
+                    fn = polyval(polyn, selectRange - selectRange(1));
+                    plot( selectRange, fn, '.b');
+                    %fplot([num2str(polyp(1)) ' * (x - ' num2str(selectRange(1)) ') + ' num2str(polyp(2))], minmax(selectRange), '.r');
+                    %fplot([num2str(polyn(1)) ' * (x - ' num2str(selectRange(1)) ') + ' num2str(polyn(2))], minmax(selectRange), '.b');
+                    %refline(1);
+                end
+                %%
                 %[c, eb] = PlotISISdf(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, 1);
-                slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx'); 
+                slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx',0); 
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
             %end
         case 'BDID'
-            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-            slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd'); 
-            %disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
+            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
+            slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd',0); 
+            disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp{iN}.fit(2))]);
         case 'TWO'
-            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs,1);
+            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [],1);
         case 'DPI'
             ti      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
             %TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], 1);
@@ -62,7 +90,7 @@ for iN= 1: length(AllNeurons)
     
     pD = -10;
     pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
-    orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    orS(iN) = -99999; %ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     
     if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID') || ((strcmpi(FileType, 'DPI')) && (strcmpi(StimulusType, 'rds'))))
         cellValid  = 1; vScore = 1;
@@ -78,9 +106,9 @@ for iN= 1: length(AllNeurons)
     ebSacTrig = []; pSacTrig = []; cSacTrig = []; % We dont need these for now
     PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX, pSacTrig, cSacTrig, ebSacTrig, ebSacTrigMean};
     
-    filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    %filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     
-    binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
+    %binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
     %save(['~/Desktop/matlab.', num2str(iN),'.mat']);
 end
 
