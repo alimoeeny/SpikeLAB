@@ -1205,6 +1205,14 @@ switch(upper(FileType))
         reflinexy(0.5, 1);
         
         
+        figure(291), clf, clickscatter(IdBiasROC1(GrandCPFlip>0), GrandCPFlip(GrandCPFlip>0), 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        ylabel('Flip ROC');
+        xlabel('Main ROC');
+        ylim([0.1 1.]);
+        xlim([0.1 1.]);
+        refline(0, 0.5);
+        reflinexy(0.5, 1);
+        
         
         figure(842), clf,
         clickscatter(RFproximity, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
