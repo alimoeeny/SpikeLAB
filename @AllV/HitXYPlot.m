@@ -1,1 +1,0 @@
-function HitXYPlot(a,b, p)DATA = GetDataFromFig(a);        DATA.selectprobe(p) = ~DATA.selectprobe(p);if DATA.selectprobe(p)set(gca,'xcolor','r','ycolor','r','linewidth',3);elseset(gca,'xcolor','k','ycolor','k','linewidth',1);endset(DATA.toplevel,'UserData',DATA);    

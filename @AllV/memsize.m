@@ -1,1 +1,0 @@
-function sz = memsize(X)    x = whos('X');    sz = x.bytes ./(1024 * 1024 * 1024);     

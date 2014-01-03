@@ -1,1 +1,0 @@
- function len = LineLength(l)          if length(l) == 4         len = abs(diff(l([1 3])) + i * diff(l([2 4])));     end

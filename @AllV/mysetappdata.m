@@ -1,1 +1,0 @@
-function DATA = mysetappdata(DATA, str, val)        if DATA.interactive < 0            DATA.appdata.(str) = val;        else            setappdata(DATA.toplevel,str, val);        end
