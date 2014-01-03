@@ -1,13 +1,12 @@
-function [pd] = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName)
-
-    DataPath = GetDataPath();
+function [pd] = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName, DataPaths)
+  
     StimulusType = 'rds';
     FileType = 'OT';
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPaths);
     if (~strcmpi(ClusterName, '.c1.'))
         if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
-            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OT');
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OT', DataPaths);
         end
     end
    
@@ -35,8 +34,12 @@ function [pd] = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName)
                 filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'DT');
             end
         end
-        Neuron = load(filepath);
-        Expt = Neuron.Expt;
-        pd = Expt.Stimvals.or;
+        if(exist(filepath) == 2)
+            Neuron = load(filepath);
+            Expt = Neuron.Expt;
+            pd = Expt.Stimvals.or;
+        else
+            pd = -0009;
+        end
     end
 end

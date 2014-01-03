@@ -2,13 +2,13 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
 % returns the rf as a vector [x, y of the center of receptive field, width (2*sd) of rf]
     DataPath = GetDataPath();
     % Do the ParaPos
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP', DataPath);
 %    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
     if (~strcmpi(ClusterName, '.c1.'))
         if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
             %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.PP.mat');
-            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP');
+            filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'PP', DataPath);
         end
     end
     rfPP = [0 0 0];
@@ -49,7 +49,7 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
     
     % Do the OrthoPos
     %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.OP.mat');
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OP');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'OP', DataPath);
     if (~strcmpi(ClusterName, '.c1.'))
         if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';
@@ -92,7 +92,7 @@ function rf = RFFit(MonkeyName, NeuronNumber, ClusterName, ShowIndividualRFs)
     
     % Do the Size
     %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, 'rds.SZ.mat');
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'SZ');
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, 'rds', 'SZ', DataPath);
     if (~strcmpi(ClusterName, '.c1.'))
         if (exist(filepath, 'file')~=2)
             ClusterName = '.c1.';

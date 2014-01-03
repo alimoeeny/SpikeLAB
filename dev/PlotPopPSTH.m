@@ -1,8 +1,8 @@
 clear;
-%clc;
+clc;
 
-ShowSingleCellSDFs = 1; % 0 or 1
-[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
+ShowSingleCellSDFs = 0; % 0 or 1
+[AllNeurons, FileType, StimulusType, StartTime, FinishTime] = loadAllNeurons4('DID');
 %Prep
 DataPaths = GetDataPath();
 BinSize = 50;%50;
@@ -21,31 +21,44 @@ SacBars = {};
 
 %AllNeurons = AllNeurons([3,4,6,7, 11, 13, 15, 20, 21, 22,23]);
 
-%par
-for iN= 1 : length(AllNeurons)
-    [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN)); 
-    if(isempty(ClusterName)), ClusterName = ['cell' num2str(AllNeurons{iN,2})]; end
-    disp(['iN: ' ,num2str(iN) , ' , Neuron: ', MonkeyName, ' - ',  num2str(NeuronNumber, '%-04.3d'), ' - ', ClusterName]);
+loadFromDisk = 0;
 
-    p = []; c = []; eb = []; jnk1 = []; jnk2 = []; xC =[]; c1 =[]; ebX =[]; 
-    pSacTrig=[]; cSacTrig=[]; ebSacTrig=[]; ebSacTrigMean = [];
-    
-    switch FileType 
-        case {'DTRW'} 
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
-            %if (abs(TI(iN))>0.1)
-                %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
-                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+if loadFromDisk
+   md = '# # # # # # # #    # # # # # # #     #  #  #  #  #  #  #  # ';
+   for mdi = 1:30, 
+       disp(md); 
+       md = circshift(md', 1)';
+   end
+   load ~/Desktop/matlab.735090.4607.mat 
+else
+    %par
+    for iN= 1 : length(AllNeurons)
+        [MonkeyName, NeuronNumber, ClusterName] = NeurClus(AllNeurons(iN));
+        if(isempty(ClusterName)), ClusterName = ['cell' num2str(AllNeurons{iN,2})]; end
+        disp(['iN: ' ,num2str(iN) , ' , Neuron: ', MonkeyName, ' - ',  num2str(NeuronNumber, '%-04.3d'), ' - ', ClusterName]);
         
-        case {'ABD', 'DID', 'DRID', 'SRID', 'DIDB'} 
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
-            %if (abs(TI(iN))>0.1)
+        p = []; c = []; eb = []; jnk1 = []; jnk2 = []; xC =[]; c1 =[]; ebX =[];
+        pSacTrig=[]; cSacTrig=[]; ebSacTrig=[]; ebSacTrigMean = [];
+        
+        switch FileType
+            case {'DTRW'}
+                TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
+                %if (abs(TI(iN))>0.05)
                 %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
-                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+                if(abs(TI(iN))>0.05) PlotIt = 1; else PlotIt = 0; end
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, PlotIt, 1);
+                
+            case {'ABD', 'DID', 'DRID', 'SRID', 'DIDB'}
+                TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], DataPaths);
+                
+                %[xC ,c1, ebX] = PlotSTAutoCorr(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, ShowSingleCellSDFs);
+                PlotIt = ShowSingleCellSDFs;
+                if(abs(TI(iN))>0.05) PlotIt = 1; else PlotIt = 0; end
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, PlotIt, 1);
                 
                 selectRange = [1001:1750];
                 %
-                %% assuming eb(1,:) is prefid, eb(2,:) is nullid and eb(3,:) is ALLTRIALDS PUT TOGETHER [15] 
+                %% assuming eb(1,:) is prefid, eb(2,:) is nullid and eb(3,:) is ALLTRIALDS PUT TOGETHER [15]
                 pPSTH = eb(1,:) - eb(3,:);
                 nPSTH = eb(3,:) - eb(2,:);
                 [polyp, polyn] = TailFits(pPSTH, nPSTH, selectRange);
@@ -64,58 +77,66 @@ for iN= 1 : length(AllNeurons)
                 end
                 %%
                 %[c, eb] = PlotISISdf(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, 1);
-                slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx',0); 
+                slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'dx',0);
+                eccentricity(iN) = Eccentricity(AllNeurons(iN), StimulusType, FileType, DataPaths);
                 %disp(['Ti; ', num2str(TI(iN)), ' - Slop: ' , num2str(slp(iN).fit(2))]);
-            %end
-        case 'BDID'
-            [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
-            slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd',0); 
-            disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp{iN}.fit(2))]);
-        case 'TWO'
-            [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs,1);
-            TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [],1);
-        case 'DPI'
-            ti      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
-            %TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], 1);
-            %[p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
-            %[pSacM, pSacSe, pSacPrj] = PlotSaccades(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType);
-            %SacBars{iN} = [pSacM , pSacSe, pSacPrj];
-            
-            %PIS(iN,:) = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ti);
-            %dxEffectPeak(iN) = dxEffectMax(MonkeyName, NeuronNumber, ClusterName, 'rds');
-            TI(iN) = ti;
+                %end
+            case 'BDID'
+                [p, c, eb, jnk1, jnk2] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs, 1);
+                TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, []);
+                slp{iN} = PsychSlop(AllNeurons(iN), StimulusType, FileType, 'bd',0);
+                disp(['Ti: ', num2str(TI(iN)), ' - Slop: ' , num2str(slp{iN}.fit(2))]);
+            case 'TWO'
+                [p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs,1);
+                TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, []);
+            case 'DPI'
+                ti      = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], 1);
+                %TIcyldx(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, 'DT',     [], 1);
+                %[p, c, eb] = PlotPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+                [pSacTrig, cSacTrig, ebSacTrig] = PlotSaccadeTriggeredPSTH(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType, BinSize, 0, ShowSingleCellSDFs);
+                %[pSacM, pSacSe, pSacPrj] = PlotSaccades(MonkeyName, NeuronNumber, ClusterName, FileType, StimulusType);
+                %SacBars{iN} = [pSacM , pSacSe, pSacPrj];
+                
+                %PIS(iN,:) = PursuitIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ti);
+                %dxEffectPeak(iN) = dxEffectMax(MonkeyName, NeuronNumber, ClusterName, 'rds');
+                TI(iN) = ti;
+        end
+        
+        pD = -10;
+        pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, DataPaths, FileType, 0);
+        orS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 'or');
+        backGroundOrS(iN) = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 'bo');
+        
+        if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID') || ((strcmpi(FileType, 'DPI')) && (strcmpi(StimulusType, 'rds'))))
+            cellValid  = 1; vScore = 1;
+        else
+            [cellValid , vScore] = CellValidity([], FileType, pD, MonkeyName, NeuronNumber, ClusterName, FileType);
+        end
+        
+        
+        for iST = 1: size(ebSacTrig,1),
+            ebSacTrigMean(iST,:) = squeeze(mean(ebSacTrig(iST,squeeze(mean(ebSacTrig(iST,:,:),3))'>0,:)));
+        end
+        
+        ebSacTrig = []; pSacTrig = []; cSacTrig = []; % We dont need these for now
+        PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX, pSacTrig, cSacTrig, ebSacTrig, ebSacTrigMean};
+        
+        %filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+        
+        %binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
+        %save(['~/Desktop/matlab.', num2str(iN),'.mat']);
     end
-    
-    pD = -10;
-    pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
-    orS(iN) = -99999; %ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    
-    if (strcmp(FileType, 'DRID') || strcmp(FileType, 'SRID') || ((strcmpi(FileType, 'DPI')) && (strcmpi(StimulusType, 'rds'))))
-        cellValid  = 1; vScore = 1;
-    else
-        [cellValid , vScore] = CellValidity([], FileType, pD, MonkeyName, NeuronNumber, ClusterName, FileType);
-    end
-    
-    
-    for iST = 1: size(ebSacTrig,1),
-        ebSacTrigMean(iST,:) = squeeze(mean(ebSacTrig(iST,squeeze(mean(ebSacTrig(iST,:,:),3))'>0,:)));
-    end
-          
-    ebSacTrig = []; pSacTrig = []; cSacTrig = []; % We dont need these for now
-    PSTHs{iN} = {p , c, eb, cellValid, vScore, pD, jnk1, jnk2, xC, ebX, pSacTrig, cSacTrig, ebSacTrig, ebSacTrigMean};
-    
-    %filenamesforbruce{iN} = strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' , MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
-    
-    %binoc{iN} = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, 've'); %Expt.Stimvals.ve;
-    %save(['~/Desktop/matlab.', num2str(iN),'.mat']);
+   
+    %%
+    for iN = 1:length(AllNeurons)
+    if(AllNeurons{iN}(1) == 'i'),
+        monkeyTag(iN) = 1;
+    end,
 end
-
-
-%%   
-save(['~/Desktop/matlab.' num2str(now) '.mat'], '-v7.3')
-
+    
+    %%
+    save(['~/Desktop/matlab.', FileType, '.', num2str(now) '.mat'], '-v7.3')
+end
 %%
 validCells = []; for i = 1: length(PSTHs), if~isempty(PSTHs{i}), validCells(i) = [PSTHs{i}{4}]; end; end
 AllConditions = [];
@@ -142,6 +163,9 @@ for i = 1 : length(PSTHs) % length(AllNeurons),
         pD(i) = ([PSTHs{i}{6}]);
 
         
+        denomfrIdZero(i) = mean(mean(PSTHs{i}{1}([PSTHs{i}{2}(1,:) | PSTHs{i}{2}(2,:)],:)));
+        conditionsCount(i,:) = sum(PSTHs{i}{2}');
+        
         tPSTHSacTrigMean(i, :, :) = PSTHs{i}{14};
         
         cntr = 0;
@@ -165,22 +189,25 @@ end
 %%
 switch FileType
     case {'DID', 'ABD', 'DIDB'}
+        criteria = ((abs(TI)>0.05));
         if ~isempty(slp)
            % vs = reshape([slp.fit], 2, length(AllNeurons));
            for i = 1:length(slp), vs(i) = slp{i}.fit(2); end
         end
-        criteria = ((abs(TI)>0.1)); 
+        criteria = ((abs(TI)>0.05)); 
+        % FOR CROSSOVER 
+        % criteria = ((abs(TI)>0.05) & min(conditionsCount(:,[3,4,5,6])')>0);
     case 'BDID'
         if ~isempty(slp)
             for i = 1:length(slp), vs(i) = slp{i}.fit(2); end
             %vs = reshape([slp.fit], 2, length(AllNeurons));
         end
-        %criteria = ((abs(TI)>0.1) & (vs(2,:) >0) & (vs(2,:)<0.01));
-        criteria = ((abs(TI)>0.1) & (vs >0) & (vs<0.01));
+        %criteria = ((abs(TI)>0.05) & (vs(2,:) >0) & (vs(2,:)<0.01));
+        criteria = ((abs(TI)>0.05) & (vs >0) & (vs<0.01));
     case 'TWO'
-        criteria = (TI>0.1 | TI<-0.1);% & validCells;  
+        criteria = (TI>0.05 | TI<-0.05);% & validCells;  
     case 'DPI'
-        criteria = (TI>0.1 | TI<-0.1);% & validCells;
+        criteria = (TI>0.05 | TI<-0.05);% & validCells;
 end
 
 
@@ -235,6 +262,11 @@ else
     end
 end
 
+%% by monkey
+PopPSTHIcarus   = squeeze(mean(tPSTH(criteria & monkeyTag==1,:,:)));
+PopPSTHDaedalus = squeeze(mean(tPSTH(criteria & monkeyTag==0,:,:)));
+
+
 %%
 if exist('tPSTHSacTrigMean')
   PopPSTHSacTrigMean = squeeze(mean(tPSTHSacTrigMean(criteria,:,:)));
@@ -243,8 +275,54 @@ end
 
 %%
 
-w_mode = 'trial_count';%'trial_count'; %'pref_init_trial';%'pref_trial'; %'pref'; %'trial_count';
+w_mode = 'normalized_by_mean'; %'trial_count'; %'normalized_by_mean_and_weighted'; %'handpickall'; %'trial_count' %'normalized_by_mean_and_weighted'; %'normalized_by_mean_and_wighted'; %'trial_count';%'trial_count'; %'pref_init_trial';%'pref_trial'; %'pref'; %'trial_count';
 switch w_mode
+    case 'handpickall'
+        AvgWtPSTH = [];
+        for wc = 1: size(AllConditions,2)
+            disp(wc);
+            avgbuff = [];
+            for wi =1: size(tPSTH,1)
+                if (AllConditions(wi,wc)>0)
+                    avgbuff = [avgbuff, squeeze(tPSTH(wi,wc,:))];
+                end
+            end
+            %WeightedPopPSTH(wc,:) = mean(avgbuff');
+            WeightedPopPSTH(wc,:) = mean(avgbuff(:,criteria(1:size(avgbuff,2)))');
+        end
+
+        
+    case 'normalized_by_mean_and_weighted'
+        for nn = 1:size(tPSTH,1)
+            for nt = 1:size(tPSTH,2)
+                for tt = 1:size(tPSTH,3)
+                    nrmPSTH(nn,nt,tt) = tPSTH(nn, nt, tt) ./ denomfrIdZero(nn);
+                end
+            end
+        end
+        
+        
+        for wi =1: size(nrmPSTH,1)
+            for wc = 1: size(AllConditions,2)
+                WtPSTH(wi,wc,:) = AllConditions(wi,wc) * squeeze(nrmPSTH(wi,wc,:));
+            end
+        end
+        WeightedPopPSTH = squeeze(sum(WtPSTH(criteria,:,:)));
+        for i = 1: size(WeightedPopPSTH,2)
+            WeightedPopPSTH(:,i) = WeightedPopPSTH(:,i) ./ sum(AllConditions(criteria,:))';
+        end
+        
+    case 'normalized_by_mean'
+        for nn = 1:size(tPSTH,1)
+            for nt = 1:size(tPSTH,2)
+                for tt = 1:size(tPSTH,3)
+                    nrmPSTH(nn,nt,tt) = tPSTH(nn, nt, tt) ./ denomfrIdZero(nn);
+                end
+            end
+        end
+        
+        WeightedPopPSTH = squeeze(mean(nrmPSTH(criteria,:,:)));
+        
     case 'trial_count'
         for wi =1: size(tPSTH,1)
             for wc = 1: size(AllConditions,2)
@@ -357,8 +435,7 @@ switch FileType
         figure(125);
 end
 clf, hold on,  
-h = plot(squeeze(PopPSTH)');
-%h = plot(squeeze(WeightedPopPSTH)');
+h = plot(squeeze(PopPSTH(1:6,:))');
 if strfind(FileType, 'RID')
     plot(PopPSTH(1,:) - PopPSTH(2,:), 'm', 'LineWidth', 2);
     plot(PopPSTH(3,:) - PopPSTH(4,:), 'k', 'LineWidth', 2);
@@ -373,6 +450,39 @@ set(gca, 'XTick', xtl+200-(BinSize - SmoothingBinSize)/2);
 set(gca, 'XTickLabel', {num2str(xtl')});
 legend(h, GetLegends(FileType));
 title(FileType);
+%errorbar(squeeze(PopPSTH)', squeeze(PopPSTHse)');
+
+%%
+switch FileType
+    case 'SRID'
+        figure(1142);
+    case 'DRID'
+        figure(1143);
+    case 'DID'
+        figure(1162);
+    case 'BDID'
+        figure(1136);  
+    case 'DPI'
+        figure(1188);
+    otherwise
+        figure(1125);
+end
+clf, hold on,  
+h = plot(squeeze(WeightedPopPSTH)');
+if strfind(FileType, 'RID')
+    plot(PopPSTH(1,:) - PopPSTH(2,:), 'm', 'LineWidth', 2);
+    plot(PopPSTH(3,:) - PopPSTH(4,:), 'k', 'LineWidth', 2);
+    refline(0,0);
+end
+
+set(h, 'LineWidth', 2);
+set(gca, 'XGrid', 'on');
+xlim([100 2200]);
+xtl = [0, 50, 500, 1000, 1500, 2000];
+set(gca, 'XTick', xtl+200-(BinSize - SmoothingBinSize)/2);
+set(gca, 'XTickLabel', {num2str(xtl')});
+legend(h, GetLegends(FileType));
+title([FileType '- weighted OR normalized']);
 
 %errorbar(squeeze(PopPSTH)', squeeze(PopPSTHse)');
 
@@ -554,10 +664,10 @@ switch FileType
         hold on,
         [vss, idx] = sort(vs);
         for i = 1:length(vs)-8
-            %criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            %criteria = ((abs(TI)>0.05) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
             criteria = idx(i:i+8);
             psq = squeeze(mean(tPSTH(criteria,:,:)))';
-            if (abs(TI(i))>0.1)
+            if (abs(TI(i))>0.05)
                 h = plot((psq(:,7) - psq(:,8)) ./ (psq(:,7) + psq(:,8)), 'Color', [(length(vs)-i)/400 (length(vs)-i)/150 (length(vs)-i)/200]);
             end
             d1(i) = mean(psq(200:800,7) - psq(200:800,8));
@@ -570,7 +680,7 @@ switch FileType
         hold on,
         [vss, idx] = sort(vs);
         for i = 1:length(vs)-8
-            %criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            %criteria = ((abs(TI)>0.05) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
             criteria = idx(i:i+8);
             PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
             psq = squeeze(PopPSTH)';
@@ -603,7 +713,7 @@ switch FileType
         thresholds = [0,0.01, 0.015, 0.1];
 
         for i = 2:length(thresholds)
-            criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            criteria = ((abs(TI)>0.05) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
             PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
             psq = squeeze(PopPSTH)';
             h = plot(psq(:,7) - psq(:,8), colors(i-1));
@@ -616,7 +726,7 @@ switch FileType
         thresholds = [0,0.01, 0.02, 0.1];
 
         for i = 2:length(thresholds)
-            criteria = ((abs(TI)>0.1) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
+            criteria = ((abs(TI)>0.05) & (vs >thresholds(i-1)) & (vs<thresholds(i)));
             PopPSTH = squeeze(mean(tPSTH(criteria,:,:)));
             psq = squeeze(PopPSTH)';
             h = plot(psq(:,1) - psq(:,2), colors(i-1));
@@ -713,7 +823,7 @@ clickscatter(squeeze(mean(tPSTH(criteria,4,300:800),3))- squeeze(mean(tPSTH(crit
 c= 0;
 for threshold = 0.2: -0.001:0  
     c = c + 1;
-    criteria = ((abs(TI)>0.1) & (vs >0) & (vs<threshold)); 
+    criteria = ((abs(TI)>0.05) & (vs >0) & (vs<threshold)); 
     p = squeeze(mean(tPSTH(criteria,:,:)));
     IdE(c) = mean(p(7,550:end) - p(8,550:end));
     IdSE(c) = std(p(7,550:end) - p(8,550:end))/sqrt(size(p,2)-550);
@@ -768,7 +878,7 @@ for iN = 1: length(AllNeurons)
     %d = mean( (PSTHs{1,iN}{3}(3,:) + PSTHs{1,iN}{3}(4,:)) - (PSTHs{1,iN}{3}(5,:) + PSTHs{1,iN}{3}(6,:)) ) * 0.5 ;
     %r = mean(  PSTHs{1,iN}{3}(1,:) - PSTHs{1,iN}{3}(2,:)) / d;
     
-    disp([abs(TI(iN))>0.1,a, b, p, e, e / d]);
+    disp([abs(TI(iN))>0.05,a, b, p, e, e / d]);
     aa = a;
     pp(iN) = p;
     bb(iN) = b;

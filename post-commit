@@ -1,0 +1,11 @@
+#!/bin/sh
+
+VERBASE=$(git rev-parse --verify HEAD | cut -c 1-7)
+echo $VERBASE
+NUMVER=$(awk '{printf("%s", $0); next}' vergversion.m | sed 's/.*verg\.//' | sed 's/\..*//')
+echo "old version: $NUMVER"
+NEWVER=$(expr $NUMVER + 1)
+echo "new version: verg.$NEWVER.$VERBASE"
+BODY="function r = vergversion()\nr = 'verg.$NEWVER.$VERBASE';\n"
+echo $BODY > vergversion.m
+#git add vergversion.m

@@ -1,14 +1,21 @@
 function [p] = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, varargin)
 
-    DataPath = GetDataPath();
-
-%    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+if(nargin>2)    
+    DataPath = GetDataPath('server');
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
     
     Neuron = load(filepath);
     Expt = Neuron.Expt;
-    
+else
+    Expt = MonkeyName;
+end
+    try
+        disp(unique([Expt.Trials.or]));
+        disp('--------------------------------------------------------');
+    catch e
+        
+    end
     or = Expt.Stimvals.or;
     if isempty(or)
         or = median([Expt.Trials.or]);
@@ -20,5 +27,8 @@ function [p] = ExperimentProperties(MonkeyName, NeuronNumber, ClusterName, Stimu
             p = Expt.Stimvals.ve;
         else 
             p = Expt.Stimvals.(varargin{1});
+            if isempty(p)
+                p = median([Expt.Trials.(varargin{1})]);
+            end
         end
     end

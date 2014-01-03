@@ -1,4 +1,4 @@
-function [AllNeurons, FileType, StimulusType] = loadAllNeurons4(ExptType)
+function [AllNeurons, FileType, StimulusType, StartTime, FinishTime] = loadAllNeurons4(ExptType)
 
 switch ExptType
   case 'ABD'
@@ -12,6 +12,8 @@ switch ExptType
     AllNeurons = AllDIDNeurons;
     FileType = 'DID';
     StimulusType = 'cylinder';
+    StartTime  = 10000; %10000; % 6500; 
+    FinishTime = 20000;
     
   case 'DTRW'
     load('../AllDTRWNeurons.mat');
@@ -24,12 +26,16 @@ switch ExptType
     AllNeurons = AllTWONeurons;
     FileType = 'TWO';
     StimulusType = 'cylinder';
+    StartTime  = 500; 
+    FinishTime = 20000;
     
   case 'BDID'
     load('../AllBDIDNeuronsALL.mat');
     AllNeurons = AllBDIDNeuronsALL;
     FileType = 'BDID';
     StimulusType = 'cylinder';
+    StartTime  = 10000; %10000; % 6500; 
+    FinishTime = 20000;
     
   case 'DIDB'
     load('../AllDIDBNeurons.mat');
@@ -68,4 +74,13 @@ switch ExptType
     FileType = 'psych';
     StimulusType = 'cylinder';
 
+  case 'TWOBruce'
+    load('../AllTWONeuronsFromBruce.mat');
+    AllNeurons = AllNeurons;
+    FileType = 'TWO';
+    StimulusType = 'cylinder';
+    StartTime  = 500; 
+    FinishTime = 20000;
+        
+    
 end

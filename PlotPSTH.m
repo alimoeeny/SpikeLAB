@@ -15,7 +15,7 @@ else
     DataPath = GetDataPath();
     %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
 %    Neuron = load(strcat(DataPath, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename));
  
     Neuron = load(filepath);
@@ -28,12 +28,12 @@ else
     %         pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, 'DT', 0);
     %     end
     else
-        pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, FileType, 0);
+        pD = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, DataPath, FileType, 0);
     end
 end
 
 try
-    rdsPrefDir = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName);
+    rdsPrefDir = PreferredRDSDirection(MonkeyName, NeuronNumber, ClusterName, DataPath);
 catch
     disp('rdsPrefDir FAILED HERE ! ! ');
     rdsPrefDir = Expt.Stimvals.or;
@@ -195,7 +195,7 @@ if(PlotIt)
             legend('Pref Or Pref dx','Pref Or null dx','Null Or Pref dx ','null Or null dx');
         case 'DID'
             disp(['Max dx:', num2str(max([Expt.Trials(:).dx])), ' - Ids are: ' , num2str(unique([Expt.Trials(:).Id]))]);
-            trialcombos = [1,2];% [1, 2, 15]; %[3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
+            trialcombos = [3,4,5,6]; %[1,2];% [1, 2, 15]; %[3,4,5,6]; %[1:size(eb,1)]; % [1,2,7,8];
             hp = figure(18719); h = plot(eb(trialcombos,:)'); % plot(eb'); %plot(eb([2,4,6],:)');
             leg = GetLegends(FileType);
             legend(h, leg(trialcombos));
@@ -230,14 +230,14 @@ if(PlotIt)
     xtl = [0, 200, 250, 700, 1200, 1700, 2200];
     set(gca, 'XTick', xtl-BinSize/2);
     set(gca, 'XTickLabel', {num2str((xtl-200)')});
-    title(strcat('NeuronID:',num2str(NeuronNumber), ' - BinSize:', num2str(BinSize), ' - PreferredCylinerRotationDir: ' , num2str(pD)));
+    title(['NeuronID:',num2str(NeuronNumber), ' - BinSize:', num2str(BinSize), ' - PreferredCylinerRotationDir: ' , num2str(pD), ' - Trial Counts: ' ,  num2str(sum(conditions(trialcombos,:)'))]);
     
     if(savetheplot)
       print(hp, '-dpsc', '-r300', '-zbuffer', ['../figs/PSTH', '-', date, '-', filename, '.eps']);
       
-      figure(hp+110); clf;
-      px = PlotExpt(filepath);
-      print(px.fig, '-dpsc', '-r300', '-zbuffer', ['../figs/PlotExpt', '-', date, '-', filename, '.eps']);
+      %figure(hp+110); clf;
+      %px = PlotExpt(filepath);
+      %print(px.fig, '-dpsc', '-r300', '-zbuffer', ['../figs/PlotExpt', '-', date, '-', filename, '.eps']);
       
     end
     

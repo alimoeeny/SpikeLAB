@@ -16,7 +16,7 @@ if isempty(Expt)
     StimulusType = 'cylinder';
     %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     %filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
     Neuron = load(filepath);
     Expt = Neuron.Expt;
 end

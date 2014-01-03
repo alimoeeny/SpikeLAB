@@ -1,11 +1,9 @@
-function [TI] = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, reqparam, doitsquare)
+function [TI] = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, reqparam, DataPaths)
 % Gets the Tuning Index of the cell  based on the average firing rate  
 
-if doitsquare
-    disp('going Square');
+if(isempty(DataPaths))
+    DataPaths = GetDataPath();
 end
-
-DataPaths = GetDataPath();
 
 FileType = ExperimentType;
 switch FileType
@@ -18,7 +16,7 @@ switch FileType
 
     otherwise
         filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType);
-        filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType);
+        filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, DataPaths);
 end
 
 if ((exist(strcat(DataPaths{1}, MonkeyName, '/', num2str(NeuronNumber, '%-04.3d'), '/' ,filename)) ~= 2) ...
@@ -40,7 +38,7 @@ end
     
 switch FileType
     case 'TWO'
-        StartTime = 1000;
+        StartTime = 500;
         values = unique([Expt.Trials.('dx')]);
     case 'DID'
         StartTime = 500;
@@ -77,12 +75,20 @@ if (strcmp(FileType, 'BDID')||strcmp(FileType, 'DID'))
 end
 SpikeCounts = zeros(length([Expt.Trials]),1);
 for tr = 1: length([Expt.Trials]), 
-    if doitsquare
-        SpikeCounts(tr) = sqrt(sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime));
-    else
-        SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
-    end
+    SpikeCounts(tr) = sum([Expt.Trials(tr).Spikes]>=StartTime & [Expt.Trials(tr).Spikes]<=FinishTime);
 end
+
+
+%disp(['Values were: ', num2str(values)]);
+if(sum(abs(values)<0.021)>2)
+    values = values(abs(values)<0.021);
+elseif(sum(abs(values)<0.041)>2)
+    values = values(abs(values)<0.041);
+else 
+    values = values([floor(length(values)/2):ceil(length(values)/2)+1]);
+end
+%disp(['Using ONLY THESE DX values:   ', num2str(values)]);
+
 
 eb=[]; cb = [];
 for i = 1:length(values)
@@ -95,19 +101,26 @@ for i = 1:length(values)
     end
 end
 
-tis = [];
-for i = 1:floor(length(eb)/2)
-    a = i;
-    b = 1 + length(eb) - i;
-    tis(i) = (sum(eb(a) .* cb(a)) ./ mean(cb(a)) - sum(eb(b) .* cb(b)) ./ mean(cb(b)) ) / ...
-     (sum(eb(a) .* cb(a)) ./ mean(cb(a)) + sum(eb(b) .* cb(b)) ./ mean(cb(b)) );
-end
 
-TI = max(tis);
-if (TI < abs(min(tis)))
-    TI = min(tis);
-end
 
+% tis = [];
+% for i = 1:floor(length(eb)/2)
+%     a = i;
+%     b = 1 + length(eb) - i;
+%     tis(i) =  (sum(eb(a) .* cb(a)) ./ mean(cb(a)) - sum(eb(b) .* cb(b)) ./ mean(cb(b)) ) / ...
+%               (sum(eb(a) .* cb(a)) ./ mean(cb(a)) + sum(eb(b) .* cb(b)) ./ mean(cb(b)) );
+%     tis(i) = tis(i) * -1;
+% end
+% 
+% TI = max(tis);
+% if (TI < abs(min(tis)))
+%     TI = min(tis);
+% end
+
+TI = (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) - sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) ) / ...
+     (sum(eb(values>0) .* cb(values>0)) ./ mean(cb(values>0)) + sum(eb(values<0) .* cb(values<0)) ./ mean(cb(values<0)) );
+
+ 
 if(isempty(TI))
     TI = -998;
 end

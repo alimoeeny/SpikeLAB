@@ -1,0 +1,15 @@
+!mat=ali_DirectionTask.m
+Rx=-10
+Ry=-10
+ce=0
+co=1
+fs=0.3
+fw=1.3
+jv=10
+nf=240
+op=+exm-sq
+sl=1
+st=rds
+sz=12
+xo=-10
+yo=-10

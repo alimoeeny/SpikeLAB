@@ -1,5 +1,7 @@
-function fpath = MakeFilePath (MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType)
-    DataPaths = GetDataPath(); 
+function fpath = MakeFilePath (MonkeyName, NeuronNumber, ClusterName, StimulusType, ExperimentType, DataPaths)
+    if(isempty(DataPaths))
+        DataPaths = GetDataPath('server');
+    end
     if ClusterName(2) == 'e'
          fname = [MonkeyAb(MonkeyName), 'M', num2str(NeuronNumber, '%-04.3d'), '.', StimulusType,'.', ExperimentType, '.', ClusterName, '.mat'];
          fpath = [DataPaths{2}, MonkeyName, '/M', num2str(NeuronNumber, '%-04.3d'), '/' ,fname];

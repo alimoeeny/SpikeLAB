@@ -9,7 +9,7 @@ if (nargin>3)
 
 %    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
 
     Neuron = load(filepath);
     Expt = Neuron.Expt;
@@ -47,6 +47,12 @@ if strcmp(reqparam, 'dx')
     values = tmpdxvals;     
 end
 
+if(isempty(values))
+    slp = [];
+    hf = [];
+    return
+end
+
 switch ExperimentType
     case {'DID', 'ABD', 'TWO', 'DIDB'}
         if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
@@ -75,12 +81,16 @@ for tr = 1: length(values),
 end
          
 hf = 0;
-if showthefit
-    hf = figure(18186); clf, hold on,
-    psf = fitpsf(Responses, 'showfit');
-else
-    psf = fitpsf(Responses);
+if(nargin>3)
+    if showthefit
+        hf = figure(18186); clf, hold on,
+        psf = fitpsf(Responses, 'showfit');
+    end
 end
+
+psf = fitpsf(Responses);
+
+
 tempResponses = [];
 for i = 1:length(psf.data)
     if (psf.data(i).p<0.9 & psf.data(i).p>0.1) 
@@ -91,11 +101,13 @@ for i = 1:length(psf.data)
     end
 end
 if (length(tempResponses)>2)
-   if showthefit
+if(nargin>3)   
+    if showthefit
        psf = fitpsf(tempResponses, 'showfit');
-   else
+    end
+end
     psf = fitpsf(tempResponses);
-   end
+   
 end
 slp = psf;
 

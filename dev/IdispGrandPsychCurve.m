@@ -1,6 +1,6 @@
 clc;
 clear;
-DataPath = GetDataPath();
+DataPath = GetDataPath('server');
 
 
 ShowIndividualPlots = 0; % 0 or 1
@@ -73,176 +73,183 @@ for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:len
 
 %    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat'); 
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
 
-    if(~isempty(strfind(FileType, 'psych')) || strcmp(FileType, 'TWOPsych'))
-        Expt = PsychMon(strcat(AllNeurons{iN}),'getexpt'); 
-    else
-        Neuron = load(filepath);
-        Expt = Neuron.Expt;
-    end
-    if isempty(Expt)
-        disp('Empty Experiment, no psych I guess!')
-        continue
-    end
-    if(~isfield(Expt.Trials, 'Id') && (strcmp(FileType, 'ABD') || strcmp(FileType, 'DID') ))
-        disp('Not an idisp expt');
-        continue;
-    end
-    if strcmpi(FileType, 'BDpsych')
-       dxValues = unique([Expt.Trials(:).bd]);
-    else
-       dxValues = unique([Expt.Trials(:).dx]);
-    end
-    if (strcmp(FileType, 'psych'))
-         dxValues = dxValues(dxValues<0.5 & dxValues>-0.5);
-         tmpdxvals = [];
-         for dxx = 1: length(dxValues)
-             if (sum([Expt.Trials(:).dx]==dxValues(dxx) & [Expt.Trials(:).RespDir] ~= 0) > 4 && sum([Expt.Trials(:).dx]== -dxValues(dxx) & [Expt.Trials(:).RespDir] ~= 0) > 4)
-                 tmpdxvals(end+1) = dxValues(dxx);
-             end
-         end
-         dxValues = tmpdxvals;
-         if(length(dxValues)<3 || sum(dxValues==0)<1)
-             disp('Too few dx values or no dx==0');
-             continue;
-         end
-    end
-    if strcmpi(FileType, 'BDpsych')
-        if(mean([Expt.Trials([Expt.Trials(:).bd]>0).RespDir])>0)
-            ResponseToPositive = 1;
-            ResponseToNegative = -1;
-        else
-            ResponseToPositive = -1;
-            ResponseToNegative = 1;
-        end
-    else
-        if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
-            ResponseToPositive = 1;
-            ResponseToNegative = -1;
-        else
-            ResponseToPositive = -1;
-            ResponseToNegative = 1;
-        end
-    end   
-    dxs{iN} = dxValues;
-    if(iseven(size(dxValues,2))), disp(strcat('It is even, it is odd!', ' - ' , num2str(iN))), end
-    if (strcmp(FileType, 'TWO') || strcmpi(FileType, 'BDpsych'))
-       ids{iN} = unique([Expt.Trials(:).bd]);
-    else
-        ids{iN} = unique([Expt.Trials(:).Id]);
-    end
-    Grand = [];
-    dxss = [];
-    trials = [];
+    TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, [], DataPath);
+    if(abs(TI(iN))>0.05) 
     
-    if strcmp(FileType, 'DID')
-        disp([NeuronNumber, max(dxValues) , max([Expt.Trials(:).Id])]);
-    end
-    
-    i=1;
-    if strcmpi(FileType, 'BDpsych')
-        Grand(1) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        dxss(1) = dxValues(i);
-        trials(1) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-    else if strcmp(FileType, 'TWO') 
-           Grand(1) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-           Grand(11)= 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] ~= 0); 
-           if(NeuronNumber == 324 || NeuronNumber == 330)
-                Grand(11)= 100 * sum([Expt.Trials(:).dx] == dxValues(i+1) & [Expt.Trials(:).bd] == -dxValues(i+1) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i+1) & [Expt.Trials(:).bd] == -dxValues(i+1) & [Expt.Trials(:).RespDir] ~= 0); 
-           end
-           dxss(1) = dxValues(i);
-           trials(1) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+        
+        if(~isempty(strfind(FileType, 'psych')) || strcmp(FileType, 'TWOPsych'))
+            Expt = PsychMon(strcat(AllNeurons{iN}),'getexpt');
         else
-            Grand(1) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            Neuron = load(filepath);
+            Expt = Neuron.Expt;
+        end
+        if isempty(Expt)
+            disp('Empty Experiment, no psych I guess!')
+            continue
+        end
+        if(~isfield(Expt.Trials, 'Id') && (strcmp(FileType, 'ABD') || strcmp(FileType, 'DID') ))
+            disp('Not an idisp expt');
+            continue;
+        end
+        if strcmpi(FileType, 'BDpsych')
+            dxValues = unique([Expt.Trials(:).bd]);
+        else
+            dxValues = unique([Expt.Trials(:).dx]);
+        end
+        if (strcmp(FileType, 'psych'))
+            dxValues = dxValues(dxValues<0.5 & dxValues>-0.5);
+            tmpdxvals = [];
+            for dxx = 1: length(dxValues)
+                if (sum([Expt.Trials(:).dx]==dxValues(dxx) & [Expt.Trials(:).RespDir] ~= 0) > 4 && sum([Expt.Trials(:).dx]== -dxValues(dxx) & [Expt.Trials(:).RespDir] ~= 0) > 4)
+                    tmpdxvals(end+1) = dxValues(dxx);
+                end
+            end
+            dxValues = tmpdxvals;
+            if(length(dxValues)<3 || sum(dxValues==0)<1)
+                disp('Too few dx values or no dx==0');
+                continue;
+            end
+        end
+        if strcmpi(FileType, 'BDpsych')
+            if(mean([Expt.Trials([Expt.Trials(:).bd]>0).RespDir])>0)
+                ResponseToPositive = 1;
+                ResponseToNegative = -1;
+            else
+                ResponseToPositive = -1;
+                ResponseToNegative = 1;
+            end
+        else
+            if(mean([Expt.Trials([Expt.Trials(:).dx]>0).RespDir])>0)
+                ResponseToPositive = 1;
+                ResponseToNegative = -1;
+            else
+                ResponseToPositive = -1;
+                ResponseToNegative = 1;
+            end
+        end
+        dxs{iN} = dxValues;
+        if(iseven(size(dxValues,2))), disp(strcat('It is even, it is odd!', ' - ' , num2str(iN))), end
+        if (strcmp(FileType, 'TWO') || strcmpi(FileType, 'BDpsych'))
+            ids{iN} = unique([Expt.Trials(:).bd]);
+        else
+            ids{iN} = unique([Expt.Trials(:).Id]);
+        end
+        Grand = [];
+        dxss = [];
+        trials = [];
+        
+        if strcmp(FileType, 'DID')
+            disp([NeuronNumber, max(dxValues) , max([Expt.Trials(:).Id])]);
+        end
+        
+        i=1;
+        if strcmpi(FileType, 'BDpsych')
+            Grand(1) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
             dxss(1) = dxValues(i);
-            trials(1) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            trials(1) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+        else if strcmp(FileType, 'TWO')
+                Grand(1) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                Grand(11)= 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                if(NeuronNumber == 324 || NeuronNumber == 330)
+                    Grand(11)= 100 * sum([Expt.Trials(:).dx] == dxValues(i+1) & [Expt.Trials(:).bd] == -dxValues(i+1) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i+1) & [Expt.Trials(:).bd] == -dxValues(i+1) & [Expt.Trials(:).RespDir] ~= 0);
+                end
+                dxss(1) = dxValues(i);
+                trials(1) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            else
+                Grand(1) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                dxss(1) = dxValues(i);
+                trials(1) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            end
         end
-    end
-    g= []; d= []; t=[];
-    for i = [2:1:size(dxValues,2)/2]
+        g= []; d= []; t=[];
+        for i = [2:1:size(dxValues,2)/2]
+            if strcmpi(FileType, 'BDpsych')
+                g(i) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                d(i) = dxValues(i);
+                t(i) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            else if strcmp(FileType, 'TWO')
+                    g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                    d(i) = dxValues(i);
+                    t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                else
+                    g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                    d(i) = dxValues(i);
+                    t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                end
+            end
+        end
+        Grand(2) = mean(g([2:1:size(dxValues,2)/2]));
+        dxss(2) = mean(d([2:1:size(dxValues,2)/2]));
+        trials(2) = sum(t([2:1:size(dxValues,2)/2]));
+        
+        
         if strcmpi(FileType, 'BDpsych')
-            g(i) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        else if strcmp(FileType, 'TWO') 
-            g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        else
-            g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            Grand(3) = 100 * sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
+            Grand(4) = 100 * sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
+            trials(3) = sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
+            trials(4) = sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
+        else if strcmp(FileType, 'TWO')
+                Grand(3) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] ~= 0);
+                Grand(4) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] ~= 0);
+                trials(3) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] ~= 0);
+                trials(4) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] ~= 0);
+            else
+                Grand(3) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
+                Grand(4) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
+                trials(3) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
+                trials(4) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
+                dxss(3) = mean([Expt.Trials([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0).Id]);
+                dxss(4) = mean([Expt.Trials([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0).Id]);
+            end
         end
+        g= []; d= []; t=[];
+        for i = [ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1];
+            if strcmpi(FileType, 'BDpsych')
+                g(i) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                d(i) = dxValues(i);
+                t(i) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            else if strcmp(FileType, 'TWO')
+                    g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                    d(i) = dxValues(i);
+                    t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                else
+                    g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                    d(i) = dxValues(i);
+                    t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                end
+            end
         end
-    end
-    Grand(2) = mean(g([2:1:size(dxValues,2)/2]));
-    dxss(2) = mean(d([2:1:size(dxValues,2)/2]));
-    trials(2) = sum(t([2:1:size(dxValues,2)/2]));
-    
-    
-    if strcmpi(FileType, 'BDpsych')
-        Grand(3) = 100 * sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        Grand(4) = 100 * sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(3) = sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(4) = sum([Expt.Trials(:).bd] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
-    else if strcmp(FileType, 'TWO') 
-        Grand(3) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        Grand(4) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(3) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(4) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).bd]>0 & [Expt.Trials(:).RespDir] ~= 0);
-    else
-        Grand(3) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        Grand(4) = 100 * sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(3) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0);
-        trials(4) = sum([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0);
-        dxss(3) = mean([Expt.Trials([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]<0 & [Expt.Trials(:).RespDir] ~= 0).Id]);
-        dxss(4) = mean([Expt.Trials([Expt.Trials(:).dx] == 0 & [Expt.Trials(:).Id]>0 & [Expt.Trials(:).RespDir] ~= 0).Id]);
-    end
-    end    
-    g= []; d= []; t=[];
-    for i = [ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1];
+        Grand(5) = mean(g([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));
+        dxss(5) = mean(d([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));
+        trials(5) = sum(t([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));
+        
+        i=size(dxValues,2);
         if strcmpi(FileType, 'BDpsych')
-            g(i) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        else if strcmp(FileType, 'TWO') 
-            g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        else
-            g(i) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-            d(i) = dxValues(i);
-            t(i) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            Grand(6) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            dxss(6) = dxValues(i);
+            trials(6) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+        else if strcmp(FileType, 'TWO')
+                Grand(6) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                dxss(6) = dxValues(i);
+                trials(6) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                Grand(12) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                if(NeuronNumber == 324 || NeuronNumber == 330)
+                    Grand(12) = 100 * sum([Expt.Trials(:).dx] == dxValues(i-1) & [Expt.Trials(:).bd] == -dxValues(i-1) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i-1) & [Expt.Trials(:).bd] == -dxValues(i-1) & [Expt.Trials(:).RespDir] ~= 0);
+                end
+            else
+                Grand(6) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+                dxss(6) = dxValues(i);
+                trials(6) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
+            end
         end
-        end
-    end
-    Grand(5) = mean(g([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));
-    dxss(5) = mean(d([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));   
-    trials(5) = sum(t([ceil(size(dxValues,2)/2)+1:1:size(dxValues,2)-1]));
-    
-    i=size(dxValues,2);
-    if strcmpi(FileType, 'BDpsych')
-        Grand(6) = 100 * sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        dxss(6) = dxValues(i);
-        trials(6) = sum([Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-    else if strcmp(FileType, 'TWO') 
-        Grand(6) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        dxss(6) = dxValues(i);
-        trials(6) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        Grand(12) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).bd] == -dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-       if(NeuronNumber == 324 || NeuronNumber == 330)
-           Grand(12) = 100 * sum([Expt.Trials(:).dx] == dxValues(i-1) & [Expt.Trials(:).bd] == -dxValues(i-1) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i-1) & [Expt.Trials(:).bd] == -dxValues(i-1) & [Expt.Trials(:).RespDir] ~= 0);
-       end
+        Grands{iN} = Grand;
+        dxsz{iN} = dxss;
+        Trialz{iN} = trials;
     else
-        Grand(6) = 100 * sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] == ResponseToNegative) / sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        dxss(6) = dxValues(i);
-        trials(6) = sum([Expt.Trials(:).dx] == dxValues(i) & [Expt.Trials(:).RespDir] ~= 0);
-        end
+        
     end
-    Grands{iN} = Grand;
-    dxsz{iN} = dxss;
-    Trialz{iN} = trials;
     
     if ShowIndividualPlots
         [slp,hp] = PsychSlop(NeuronName, StimulusType, FileType, 'dx', 1);
@@ -256,7 +263,7 @@ end
 
 %% Grand 
 
-figure,
+figure(17653), 
 i=0;
 for ii = 1:length(Grands)
   if ~isempty(Grands{ii})

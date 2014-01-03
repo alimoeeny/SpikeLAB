@@ -1,20 +1,23 @@
-function [pd] = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, varargin)
+function [pd] = PreferredCylinderRotationDirection(MonkeyName, NeuronNumber, ClusterName, DataPaths, varargin)
 % 1: positive, 2: negative , -1 when file does not exist
 % arguments Monkey name,  neuron number, clustername, fiiletype, Include zero or not,
 % 'forced' (forced to use the filetype given not to use ABD if available or ...)
 
 % manual mapping for tricky neurons
 % positive pref
-if (sum(strcmpi([MonkeyName, num2str(NeuronNumber)],{'dae523'; ''}))>0)
-    pd = 1;
-    return
-end
+
+if(nargin>1)
+    if (sum(strcmpi([MonkeyName, num2str(NeuronNumber)],{'dae523'; ''}))>0)
+        pd = 1;
+        return
+    end
+
 % negative pref
 if (sum(strcmpi([MonkeyName, num2str(NeuronNumber)],{''; ''}))>0)
     pd = 2;
     return
 end
-
+end
 
 if(nargin==1)
     Expt = MonkeyName;
@@ -22,7 +25,7 @@ if(nargin==1)
     IncludeZero = 0;
 else
 
-    DataPath = GetDataPath();
+   
     StimulusType = 'cylinder';
 
     if(size(varargin,2)>0)
@@ -56,7 +59,7 @@ else
 
     %filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
-    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPaths);
 
 %     if ~isempty(strfind(FileType, 'RID'))
 %         filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', 'DRID','.mat');

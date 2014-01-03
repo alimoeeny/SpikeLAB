@@ -1,24 +1,14 @@
+clear, clc
 
-%clear, clc
-DataPath = GetDataPath();
+DataPath = GetDataPath('server');
 
 % % % % DID
-load('../AllDIDNeurons.mat');
-AllNeurons = AllDIDNeurons;
-clear AllDIDNeurons;
-FileType = 'DID';
-StimulusType = 'cylinder';
+[AllNeurons, FileType, StimulusType, StartTime, FinishTime] = loadAllNeurons4('DID');
+
 % experiments with valid eyetracking for  both eyes
 BinocularExperiments = {'dae014';'dae015';'dae018';'dae054';'dae149';'dae151';'dae447';'dae4472';'dae449';'dae4492';};
 
-load ~/Desktop/matlab.mat EyeTrack
-
-% % % TWO
-% load('../AllTWONeurons.mat');
-% AllNeurons = AllTWONeurons;
-% clear AllTWOPsychDays;
-% FileType = 'TWO';
-% StimulusType = 'cylinder';
+%load ~/Desktop/matlab.mat EyeTrack
 
 %par
 for iN= 1:length(AllNeurons), 

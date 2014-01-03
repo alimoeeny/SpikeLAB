@@ -1,52 +1,57 @@
-
-energycutoff=100000;
-border = 240;
-myspks = [];
-spikeEnergies = [];
-
-%load('/sc/bgc5/Utah/lem/G001/lemG001002.mat'); % -600
-load('/sc/bgc5/Utah/lem/G002/lemG002001.mat');
-
-peakVoltages = NEV.Data.Spikes.Waveform(:,13);
-probe = 1;
-timeStamps = NEV.Data.Spikes.TimeStamp(NEV.Data.Spikes.Electrode==probe);
+clc;
+clear;
+DataPath = GetDataPath();
 
 
-for i = 1:length(timeStamps)
-    disp(i);
-    spikeEnergies(i) = sum(diff(NEV.Data.Spikes.Waveform(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==probe),:)).^2);
-%     if  (peakVoltages(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==10))>-300)
-%         spikeEnergies(i) = -spikeEnergies(i);
-%     end 
-    spks(i,:) = NEV.Data.Spikes.Waveform(find(NEV.Data.Spikes.TimeStamp==timeStamps(i) & NEV.Data.Spikes.Electrode==probe),:); % - NEV.Data.Spikes.Waveform(i,10);
-%     myspks(i,1,:) = 1 * full_voltage(probe,timeStamps(i)-border:timeStamps(i)+border);
-%     myspks(i,2,:) = 1 * filtered_voltage(probe,timeStamps(i)-border:timeStamps(i)+border);
-%     myspks(i,3,:) = 1 * freq_filtered_signal(timeStamps(i)-border:timeStamps(i)+border);
-%     myspks(i,4,:) = 1 * averagedNoise(timeStamps(i)-border:timeStamps(i)+border);
+ShowIndividualPlots = 0; % 0 or 1
+SaveIndividualPlots = 0; % 0 or 1
+%[AllNeurons, FileType, StimulusType] = loadAllNeurons4('DID');
+[AllNeurons, FileType, StimulusType] = loadAllNeurons4('TWO');
+
+
+refrenceDxs = [-0.0335   -0.0067   -0.0033         0    0.0033    0.0067    0.0335];
+
+for iN= 1:length(AllNeurons), %iN= [20: 25] %length(AllNeurons)] %[1:20] % 1:length(AllNeurons), 
+    NeuronName = AllNeurons(iN);
+    [MonkeyName, NeuronNumber, ClusterName] = NeurClus(NeuronName); 
+    disp(strcat('iN: ' ,num2str(iN) , ' , Neuron: ', num2str(NeuronNumber, '%-04.3d')));
+
+    filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+    filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
+
+    TI(iN) = TuningIndex(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, []);
+    if(abs(TI(iN))>0.1) 
+        Neuron = load(filepath);
+        Expt = Neuron.Expt;
+    
+        values = unique([Expt.Trials(:).dx]);
+        valuesLengths(iN) = length(values);
+        if (length(values) == 7)
+            vivals(iN, :) = values;
+        else
+            vivals(iN, 1) = values(1);           % min
+            vivals(iN, 4) = values(ceil(end/2)); % 0
+            vivals(iN, 7) = values(end);         % max
+            for dxi = 2:length(values)-1
+                if(values(dxi)~=0)
+                    dxii = find(abs(refrenceDxs-values(dxi))==min(abs(refrenceDxs-values(dxi))));
+                    disp(dxii);
+                    vivals(iN, dxii) = values(dxi);
+                end
+            end
+%         if (length(values) == 5)
+%             vivals(iN, 1) = values(1); % min
+%             vivals(iN, 4) = values(3); % 0
+%             vivals(iN, 7) = values(5); % max
+%             vivals(iN, 3) = values(2); % 0
+%             vivals(iN, 5) = values(4); % 0
+%         else 
+%             vivals(iN, 1) = values(1);           % min
+%             vivals(iN, 4) = values(ceil(end/2)); % 0
+%             vivals(iN, 7) = values(end);         % max
+%             vivals(iN, 3) = values(2);           % 0
+%             vivals(iN, 5) = values(end - 1);     % 0
+%         end
+        end
+    end
 end
-
-figure(1982+probe), clf, hold on, hist(spikeEnergies,100)
-
-figure(1123), clf, hold on, 
-plot(spks(spikeEnergies>energycutoff,:)', 'r', 'LineWidth', 2)
-plot(spks(spikeEnergies<energycutoff,:)', 'k', 'LineWidth', 1)
-
-figure(3311), clf, hold on, 
-plot(squeeze(mean(myspks(spikeEnergies>energycutoff,1,:),1))', 'r', 'LineWidth', 2)
-plot(squeeze(mean(myspks(spikeEnergies<energycutoff,1,:),1))', 'k', 'LineWidth', 1)
-reflinexy(border,200);
-
-figure(3322), clf, hold on, 
-plot(squeeze(mean(myspks(spikeEnergies>energycutoff,2,:),1))', 'r', 'LineWidth', 2)
-plot(squeeze(mean(myspks(spikeEnergies<energycutoff,2,:),1))', 'k', 'LineWidth', 1)
-reflinexy(border,200);
-
-figure(3333), clf, hold on, 
-plot(squeeze(mean(myspks(spikeEnergies>energycutoff,3,:),1))', 'r', 'LineWidth', 2)
-plot(squeeze(mean(myspks(spikeEnergies<energycutoff,3,:),1))', 'k', 'LineWidth', 1)
-reflinexy(border,200);
-
-figure(3344), clf, hold on, 
-plot(squeeze(mean(myspks(spikeEnergies>energycutoff,4,:),1))', 'r', 'LineWidth', 2)
-plot(squeeze(mean(myspks(spikeEnergies<energycutoff,4,:),1))', 'k', 'LineWidth', 1)
-reflinexy(border,200);
