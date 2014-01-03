@@ -1,1 +1,0 @@
-function SelectTrial(src, b)DATA = GetDataFromFig(src);id = get(src,'value');AllV.PlotOneTrial(DATA,id)

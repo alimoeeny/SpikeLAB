@@ -1,1 +1,0 @@
-function exitallv(src, evnt)    DATA = get(src,'UserData');    if isfield(DATA,'tag')        f = fields(DATA.tag);        for j = 1:length(f)            if ~strcmp(f{j},'top')                CloseTag(DATA.tag.(f{j}));            end        end    end    try        fclose(DATA.logfid);    end    delete(src);    

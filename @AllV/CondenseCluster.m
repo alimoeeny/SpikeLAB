@@ -1,1 +1,0 @@
-function D = CondenseCluster(C)    D = rmfields(C,{'gmfit2dman' 'gmfit2d' 'gmfit1d' 'gmfit'});    

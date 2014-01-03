@@ -1,1 +1,0 @@
-function Spikes = MakeJamesSpikes(DATA)    V = AllV.mygetappdata(DATA,'AllVoltages');    V = V(DATA.chspk,:,:);    Spikes.V = permute(V,[3 2 1]);    Spikes.times = DATA.t;    Spikes.trig_vals = DATA.rV';    Spikes.trig_thresh = DATA.Trigger;    

@@ -1,1 +1,0 @@
-function AddSelectorContextMenu(DATA, ax, probe)     cmenu = uicontextmenu;     h = uimenu(cmenu,'label','Set Probe','Callback',{@AllV.SelectProbe, probe});     set(ax,'uicontextmenu',cmenu);       

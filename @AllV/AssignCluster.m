@@ -1,1 +1,0 @@
-function cid = AssignCluster(DATA, G)    cid = cluster(G, DATA.pcs(DATA.uid,DATA.pcspace));

@@ -1,1 +1,0 @@
-function myAllV = GetAllV(DATA)    if DATA.interactive < 0 && isfield(DATA,'AllVoltages')        myAllV = DATA.AllVoltages;    else        myAllV = getappdata(DATA.toplevel,'AllVoltages');        if isempty(myAllV) && isfield(DATA,'AllVoltages')            myAllV = DATA.AllVoltages;        end    end                
