@@ -1206,7 +1206,7 @@ switch(upper(FileType))
         
         
         figure(291), clf, clickscatter(IdBiasROC1(GrandCPFlip>0), GrandCPFlip(GrandCPFlip>0), 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-        ylabel('Flip ROC');
+        ylabel('GrandCP for flip');
         xlabel('Main ROC');
         ylim([0.1 1.]);
         xlim([0.1 1.]);
@@ -1257,6 +1257,31 @@ figure(110011), clf, hold on,
 bar(ax, bwhite + bblack, 'r');
 bar(ax, bblack, 'k');
 xlim([0 1]);
+
+
+%%
+trialcountstable = zeros(2,2);
+zscoredspikecountstable = zeros(2,2);
+for i = 1:length(ContignGTables)
+    trialcountstable = trialcountstable + ContignGTables{i}(:,:,2);
+    zscoredspikecountstable = zscoredspikecountstable + ContignGTables{i}(:,:,1);
+end
+
+%model
+%
+% ----------------------------------------------------------------------
+%       |  p choice                     | null choice                  |
+% ------|-------------------------------|------------------------------|
+% p bd  | ((b+t)(n-m1)+2tm1) / (n+m1)   |  -b-t                        |
+% ------|-------------------------------|------------------------------|
+% n bd  | b + t                         | ((-b-t)(n-m2)-2tm2) / (n+m2) |
+% ----------------------------------------------------------------------
+
+% b+t -> PN
+PN = somesortofnormalizedorweightedzscoredspikecountstable(2,1);
+% -b-t -> NP
+NP = somesortofnormalizedorweightedzscoredspikecountstable(1,2);
+%  ((b+t)(n-m1)+2tm1) / (n+m1)
 
 
 
