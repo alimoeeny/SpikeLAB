@@ -25,6 +25,3 @@ end
 if nargout == 3
     permutations = rocr;
 end
-
-
-

@@ -22,6 +22,7 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % FinishTime = 10000;
 
 doitsquare = 0;
+ReSamplingBinsCT = {};
 
 % ABD
 % load /Users/ali/DropBox/Projects/BCode/AllABDNeurons.mat
@@ -747,6 +748,8 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     
                     
                     zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
+                    conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
+                    ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
                     bi = 1; ei = sum(conditions(24,:));
                     CT(1,1,1) =  mean(zsc(bi:ei));  % pref bd pref choice
                     bi = ei + 1; ei = ei + sum(conditions(25,:));
@@ -1283,17 +1286,50 @@ xlim([0 1]);
 trialcountstable = zeros(2,2);
 zscoredspikecountstable = zeros(2,2);
 cellcounter = 0;
+ReSamplingBinCT = [[]];
 for i = 1:length(ContignGTables)
     if shart(i)
          if (sum(isnan(ContignGTables{i}(:)))==0)
             trialcountstable = trialcountstable + ContignGTables{i}(:,:,2);
             zscoredspikecountstable = zscoredspikecountstable + ContignGTables{i}(:,:,1);
             cellcounter = cellcounter + 1;
+            ReSamplingBinCT = [ReSamplingBinCT, ReSamplingBinsCT{i}];
          end
     end
 end
+zscoredspikecountstable = zscoredspikecountstable ./ cellcounter; 
 
 disp(['cells in this table: ', num2str(cellcounter)]);
+
+totaltrialscount = sum(trialcountstable(:));
+
+p = zscoredspikecountstable(1,1);
+q = zscoredspikecountstable(1,2);
+r = zscoredspikecountstable(2,1);
+s = zscoredspikecountstable(2,2);
+n = totaltrialscount / 4;
+m1 = abs(0.5 * ((trialcountstable(1,1) - n) + (n - trialcountstable(1,2))));
+m2 = abs(0.5 * ((trialcountstable(2,1) - n) + (n - trialcountstable(2,2))));
+
+alpha = ((r - q) / 2);
+beta = p -s ;
+
+%N = (((beta*n*n)+(beta*n*m2)+(beta*n*m1)+(beta*m1*m2)) /2);
+%N = N - (alpha*n*n) - (alpha*m1*m2);
+%D = (n*m1)+(n*m2)-(2*m1*m2);
+%t = N/D;
+
+N = (beta*n*n)+(beta*(m1+m2)*n)+(beta*m1*m2)-(2*alpha*n*n)+(2*alpha*m1*m2);
+D = 2 *((n*m1)+(n*m2)+(2*m1*m2));
+
+t = N/D;
+b = alpha - t;
+
+myB = b;
+myT = t;
+
+disp(['real t and b are : ', num2str(b), num2str(t)]);
+
 
 %model
 %
@@ -1306,10 +1342,97 @@ disp(['cells in this table: ', num2str(cellcounter)]);
 % ----------------------------------------------------------------------
 
 % b+t -> PN
-PN = somesortofnormalizedorweightedzscoredspikecountstable(2,1);
+%PN = somesortofnormalizedorweightedzscoredspikecountstable(2,1);
 % -b-t -> NP
-NP = somesortofnormalizedorweightedzscoredspikecountstable(1,2);
+%NP = somesortofnormalizedorweightedzscoredspikecountstable(1,2);
 %  ((b+t)(n-m1)+2tm1) / (n+m1)
+
+% resampling
+
+resamplesSpace = [[]];
+resampled_Bs = [];
+resampled_Ts = [];
+totaltrialscount = sum(trialcountstable(:));
+for ri = 1:1000 % resampling
+    disp(ri);
+    psamples = [];
+    for xi = 1:sum(ReSamplingBinCT(1,:)==1)
+        rx = randi(sum(ReSamplingBinCT(1,:)==1), 1);
+        idxs =  find(ReSamplingBinCT(1,:)==1);
+        psamples = [psamples idxs(rx)];
+    end
+    qsamples = [];
+    for xi = 1:sum(ReSamplingBinCT(1,:)==2)
+        rx = randi(sum(ReSamplingBinCT(1,:)==2), 1);
+        idxs =  find(ReSamplingBinCT(1,:)==2);
+        qsamples = [qsamples idxs(rx)];
+    end
+    rsamples = [];
+    for xi = 1:sum(ReSamplingBinCT(1,:)==4)
+        rx = randi(sum(ReSamplingBinCT(1,:)==4), 1);
+        idxs =  find(ReSamplingBinCT(1,:)==4);
+        rsamples = [rsamples idxs(rx)];
+    end
+    ssamples = [];
+    for xi = 1:sum(ReSamplingBinCT(1,:)==3)
+        rx = randi(sum(ReSamplingBinCT(1,:)==3), 1);
+        idxs =  find(ReSamplingBinCT(1,:)==3);
+        ssamples = [ssamples idxs(rx)];
+    end
+    
+    
+    %thisspace = [ReSamplingBinCT(psamples); ReSamplingBinCT(qsamples); ReSamplingBinCT(rsamples); ReSamplingBinCT(ssamples)];
+    %resamplesSpace(ri,:) = [mean(ReSamplingBinCT(psamples)); mean(ReSamplingBinCT(qsamples)); mean(ReSamplingBinCT(rsamples)); mean(ReSamplingBinCT(ssamples))];
+    p = mean(ReSamplingBinCT(2,psamples));
+    q = mean(ReSamplingBinCT(2,qsamples));
+    r = mean(ReSamplingBinCT(2,rsamples));
+    s = mean(ReSamplingBinCT(2,ssamples));
+    
+    n = totaltrialscount / 4;
+    m1 = abs(0.5 * ((trialcountstable(1,1) - n) + (n - trialcountstable(1,2))));
+    m2 = abs(0.5 * ((trialcountstable(2,1) - n) + (n - trialcountstable(2,2))));
+
+
+    alpha = ((r - q) / 2);
+    beta = p -s ;
+
+    
+    N = (beta*n*n)+(beta*(m1+m2)*n)+(beta*m1*m2)-(2*alpha*n*n)+(2*alpha*m1*m2);
+    D = 2 *((n*m1)+(n*m2)+(2*m1*m2));
+    t = N/D;
+    b = alpha - t;
+    resampled_Bs(ri) = b;
+    resampled_Ts(ri) = t;
+end
+
+resampled_Bs = sort(resampled_Bs);
+[m, n] = find(resampled_Bs>=myB);
+if (size(n,2)>0)
+    if myB>mean(resampled_Bs)
+        Bpp = 100 - (n(1) * 100 / length(resampled_Bs));
+    else
+        Bpp = (n(1) * 100 / length(resampled_Bs));
+    end
+end
+
+
+resampled_Ts = sort(resampled_Ts);
+[m, n] = find(resampled_Ts>=myT);
+if (size(n,2)>0)
+    if myT>mean(resampled_Ts)
+        Tpp = 100 - (n(1) * 100 / length(resampled_Ts));
+    else
+        Tpp = (n(1) * 100 / length(resampled_Ts));
+    end
+end
+
+
+
+figure(3683),clf, hold on,
+hist(resampled_Bs, 100);
+hist(resampled_Ts, 100, 'r');
+
+
 
 
 
