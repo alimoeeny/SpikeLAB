@@ -4,6 +4,9 @@
 
 clear;
 clc
+
+cd /b/ali/matlab/SpikeLAB/dev
+
 try
     cd dev
 catch tempE
@@ -272,6 +275,7 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     conditions(18,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
                     conditions(19,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
                     
+                    %these are very suspicious, why ~= ? what I was thinking
                     conditions(20,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
                     conditions(21,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
                     conditions(22,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
@@ -310,6 +314,7 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     conditions(18,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
                     conditions(19,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
                     
+                    %these are very suspicious, why ~= ? what I was thinking
                     conditions(20,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
                     conditions(21,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
                     conditions(22,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
@@ -735,21 +740,25 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     
                     %% Contingency Tables
                     CT = zeros(2,2,2); % 3rd two, one for zscored rates and one for trial counts
-                    CT(1,1,2) =  sum(conditions(20,:)); % pref bd pref choice
-                    CT(1,2,2) =  sum(conditions(21,:)); % pref bd null choice
-                    CT(2,2,2) =  sum(conditions(22,:)); % null bd null choice
-                    CT(2,1,2) =  sum(conditions(23,:)); % null bd pref choice
+                    CT(1,1,2) =  sum(conditions(24,:)); % pref bd pref choice
+                    CT(1,2,2) =  sum(conditions(25,:)); % pref bd null choice
+                    CT(2,2,2) =  sum(conditions(27,:)); % null bd null choice
+                    CT(2,1,2) =  sum(conditions(26,:)); % null bd pref choice
                     
                     
-                    zsc = zscore([SpikeCounts(conditions(20,:)); SpikeCounts(conditions(21,:));SpikeCounts(conditions(22,:));SpikeCounts(conditions(23,:))]);
-                    bi = 1; ei = sum(conditions(20,:));
+                    zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
+                    bi = 1; ei = sum(conditions(24,:));
                     CT(1,1,1) =  mean(zsc(bi:ei));  % pref bd pref choice
-                    bi = ei + 1; ei = ei + sum(conditions(21,:));
+                    bi = ei + 1; ei = ei + sum(conditions(25,:));
                     CT(1,2,1) =  mean(zsc(bi:ei));  % pref bd null choice
-                    bi = ei + 1; ei = ei + sum(conditions(22,:));
+                    bi = ei + 1; ei = ei + sum(conditions(27,:));
                     CT(2,2,1) =  mean(zsc(bi:ei)); % null bd null choice
-                    bi = ei + 1; ei = ei + sum(conditions(23,:));
+                    bi = ei + 1; ei = ei + sum(conditions(26,:));
                     CT(2,1,1) =  mean(zsc(bi:ei)); % null bd pref choice
+                    
+                    if (sum(isnan(CT(:)))>0)
+                        debug = 1;
+                    end
                     
                     ContignGTables{iN} = CT;
                     
@@ -779,6 +788,8 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     GrandCPFlip(iN) = ROCAUC(aaF, bbF);
                     
                     %% CP only with Biased trials
+                    
+                    %somthing is very suspicious about conditions(20 through 23 make sure that is what you mean here
                     CPOnlyCorrectBiased(iN) = ROCAUC(SpikeCounts(conditions(20,:)), SpikeCounts(conditions(22,:)));
                     CPOnlyWrongBiased(iN) = ROCAUC(SpikeCounts(conditions(21,:)), SpikeCounts(conditions(23,:)));
                 end
@@ -1213,6 +1224,15 @@ switch(upper(FileType))
         refline(0, 0.5);
         reflinexy(0.5, 1);
         
+        figure(298), clf, clickscatter(FlipROC(GrandCPFlip>0), GrandCPFlip(GrandCPFlip>0), 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        ylabel('GrandCP for flip');
+        xlabel('Flip ROC');
+        ylim([0.1 1.]);
+        xlim([0.1 1.]);
+        refline(0, 0.5);
+        reflinexy(0.5, 1);
+        
+        
         
         figure(842), clf,
         clickscatter(RFproximity, FlipROC, 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
@@ -1262,10 +1282,18 @@ xlim([0 1]);
 %%
 trialcountstable = zeros(2,2);
 zscoredspikecountstable = zeros(2,2);
+cellcounter = 0;
 for i = 1:length(ContignGTables)
-    trialcountstable = trialcountstable + ContignGTables{i}(:,:,2);
-    zscoredspikecountstable = zscoredspikecountstable + ContignGTables{i}(:,:,1);
+    if shart(i)
+         if (sum(isnan(ContignGTables{i}(:)))==0)
+            trialcountstable = trialcountstable + ContignGTables{i}(:,:,2);
+            zscoredspikecountstable = zscoredspikecountstable + ContignGTables{i}(:,:,1);
+            cellcounter = cellcounter + 1;
+         end
+    end
 end
+
+disp(['cells in this table: ', num2str(cellcounter)]);
 
 %model
 %
