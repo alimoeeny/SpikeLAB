@@ -748,8 +748,12 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     
                     
                     zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
-                    conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
-                    ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
+                    conds = [1 * ones(1,sum(conditions(24,:))),2 * ones(1,sum(conditions(25,:))),3 * ones(1,sum(conditions(27,:))),4 * ones(1,sum(conditions(26,:)))];
+                    ReSamplingBinsCT{iN} = [conds; zsc'];                    
+                    % WRONG
+                    %conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
+                    %ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
+                    
                     bi = 1; ei = sum(conditions(24,:));
                     CT(1,1,1) =  mean(zsc(bi:ei));  % pref bd pref choice
                     bi = ei + 1; ei = ei + sum(conditions(25,:));
@@ -1328,7 +1332,7 @@ b = alpha - t;
 myB = b;
 myT = t;
 
-disp(['real t and b are : ', num2str(b), num2str(t)]);
+disp(['real t and b are : ', num2str(b), ' and ', num2str(t)]);
 
 
 %model
@@ -1355,44 +1359,30 @@ resampled_Ts = [];
 totaltrialscount = sum(trialcountstable(:));
 for ri = 1:1000 % resampling
     disp(ri);
-    psamples = [];
-    for xi = 1:sum(ReSamplingBinCT(1,:)==1)
-        rx = randi(sum(ReSamplingBinCT(1,:)==1), 1);
-        idxs =  find(ReSamplingBinCT(1,:)==1);
-        psamples = [psamples idxs(rx)];
-    end
-    qsamples = [];
-    for xi = 1:sum(ReSamplingBinCT(1,:)==2)
-        rx = randi(sum(ReSamplingBinCT(1,:)==2), 1);
-        idxs =  find(ReSamplingBinCT(1,:)==2);
-        qsamples = [qsamples idxs(rx)];
-    end
-    rsamples = [];
-    for xi = 1:sum(ReSamplingBinCT(1,:)==4)
-        rx = randi(sum(ReSamplingBinCT(1,:)==4), 1);
-        idxs =  find(ReSamplingBinCT(1,:)==4);
-        rsamples = [rsamples idxs(rx)];
-    end
-    ssamples = [];
-    for xi = 1:sum(ReSamplingBinCT(1,:)==3)
-        rx = randi(sum(ReSamplingBinCT(1,:)==3), 1);
-        idxs =  find(ReSamplingBinCT(1,:)==3);
-        ssamples = [ssamples idxs(rx)];
+    
+    samples = [];
+    for xi = 1:size(ReSamplingBinCT,2)
+        rx = randi(size(ReSamplingBinCT,2),1);
+        samples = [samples rx];
     end
     
+    %remove this, this is just a sanity check to run once,
+    %samples = randperm(size(ReSamplingBinCT,2));
     
-    %thisspace = [ReSamplingBinCT(psamples); ReSamplingBinCT(qsamples); ReSamplingBinCT(rsamples); ReSamplingBinCT(ssamples)];
-    %resamplesSpace(ri,:) = [mean(ReSamplingBinCT(psamples)); mean(ReSamplingBinCT(qsamples)); mean(ReSamplingBinCT(rsamples)); mean(ReSamplingBinCT(ssamples))];
-    p = mean(ReSamplingBinCT(2,psamples));
-    q = mean(ReSamplingBinCT(2,qsamples));
-    r = mean(ReSamplingBinCT(2,rsamples));
-    s = mean(ReSamplingBinCT(2,ssamples));
+    pqrs = ReSamplingBinCT(:,samples);
+    ps = pqrs(2,find(pqrs(1,:)==1));
+    qs = pqrs(2,find(pqrs(1,:)==2));
+    rs = pqrs(2,find(pqrs(1,:)==4));
+    ss = pqrs(2,find(pqrs(1,:)==3));
+    p = mean(ps);
+    q = mean(qs);
+    r = mean(rs);
+    s = mean(ss);
     
-    n = totaltrialscount / 4;
-    m1 = abs(0.5 * ((trialcountstable(1,1) - n) + (n - trialcountstable(1,2))));
-    m2 = abs(0.5 * ((trialcountstable(2,1) - n) + (n - trialcountstable(2,2))));
-
-
+    n = (length(ps) + length(qs) + length(rs) + length(ss))./4;
+    m1 = abs(0.5 * ((length(ps) - n) + (n - length(qs))));
+    m2 = abs(0.5 * ((length(rs) - n) + (n - length(ss))));
+    
     alpha = ((r - q) / 2);
     beta = p -s ;
 
@@ -1401,10 +1391,15 @@ for ri = 1:1000 % resampling
     D = 2 *((n*m1)+(n*m2)+(2*m1*m2));
     t = N/D;
     b = alpha - t;
+    resampled_Ps_Len(ri) = length(ps);
+    resampled_Qs_Len(ri) = length(qs);
+    resampled_Rs_Len(ri) = length(rs);
+    resampled_Ss_Len(ri) = length(ss);
     resampled_Bs(ri) = b;
     resampled_Ts(ri) = t;
 end
 
+%this is basically a sanity check
 resampled_Bs = sort(resampled_Bs);
 [m, n] = find(resampled_Bs>=myB);
 if (size(n,2)>0)
@@ -1415,11 +1410,34 @@ if (size(n,2)>0)
     end
 end
 
-
+%this one is also basically a sanity check
 resampled_Ts = sort(resampled_Ts);
 [m, n] = find(resampled_Ts>=myT);
 if (size(n,2)>0)
     if myT>mean(resampled_Ts)
+        Tpp = 100 - (n(1) * 100 / length(resampled_Ts));
+    else
+        Tpp = (n(1) * 100 / length(resampled_Ts));
+    end
+end
+
+
+% is myT different that Bs
+resampled_Bs = sort(resampled_Bs);
+[m, n] = find(resampled_Bs>=myT);
+if (size(n,2)>0)
+    if myT>mean(resampled_Bs)
+        Bpp = 100 - (n(1) * 100 / length(resampled_Bs));
+    else
+        Bpp = (n(1) * 100 / length(resampled_Bs));
+    end
+end
+
+% is myB different that Ts
+resampled_Ts = sort(resampled_Ts);
+[m, n] = find(resampled_Ts>=myB);
+if (size(n,2)>0)
+    if myB>mean(resampled_Ts)
         Tpp = 100 - (n(1) * 100 / length(resampled_Ts));
     else
         Tpp = (n(1) * 100 / length(resampled_Ts));
@@ -1432,7 +1450,11 @@ figure(3683),clf, hold on,
 hist(resampled_Bs, 100);
 hist(resampled_Ts, 100, 'r');
 
-
+figure(4876), clf, hold on,
+hist(resampled_Ps_Len, 30, '.r')
+hist(resampled_Qs_Len, 30, '.r')
+hist(resampled_Rs_Len, 30, '.r')
+hist(resampled_Ss_Len, 30, '.r')
 
 
 
