@@ -125,6 +125,12 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
     %    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    if ~exist(filepath, 'file')
+        debug =1;
+        nstr = num2str(NeuronNumber, '%-04.3d');
+        shellcommand = ['ln -s /b/data/icarus/',nstr,'/ic',nstr,'.0.',ClusterName,'.cylinder.DID.mat /b/data/icarus/',nstr,'/ic',nstr,'.',ClusterName,'.cylinder.DID.mat'];
+        system(shellcommand)
+    end
     Neuron = load(filepath);
     Expt = Neuron.Expt;
     fileNames{iN} = filename;
@@ -164,6 +170,9 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     end
     if (rdsPrefDirFailed || (length(rdsPrefDir)>1))
         rdsPrefDir = Expt.Stimvals.or;
+        if isempty(rdsPrefDir)
+            rdsPrefDir = median([Expt.Trials.or]);
+        end
     end
     prdsDir(iN) = rdsPrefDir;
     
@@ -632,6 +641,41 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     if(GrandCP(iN)<0)
                         debug = 1;
                     end
+                    
+                    %% DID Contingency Tables
+                    if(strcmpi(FileType, 'DID'))
+                    CT = zeros(2,2,2); % 3rd two, one for zscored rates and one for trial counts
+                    CT(1,1,2) =  sum(conditions(24,:)); % pref id pref choice
+                    CT(1,2,2) =  sum(conditions(25,:)); % pref id null choice
+                    CT(2,2,2) =  sum(conditions(27,:)); % null id null choice
+                    CT(2,1,2) =  sum(conditions(26,:)); % null id pref choice
+                    
+                    
+                    zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
+                    conds = [1 * ones(1,sum(conditions(24,:))),2 * ones(1,sum(conditions(25,:))),3 * ones(1,sum(conditions(27,:))),4 * ones(1,sum(conditions(26,:)))];
+                    ReSamplingBinsCT{iN} = [conds; zsc'];                    
+                    % WRONG
+                    %conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
+                    %ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
+                    
+                    bi = 1; ei = sum(conditions(24,:));
+                    CT(1,1,1) =  mean(zsc(bi:ei));  % pref id pref choice
+                    bi = ei + 1; ei = ei + sum(conditions(25,:));
+                    CT(1,2,1) =  mean(zsc(bi:ei));  % pref id null choice
+                    bi = ei + 1; ei = ei + sum(conditions(27,:));
+                    CT(2,2,1) =  mean(zsc(bi:ei)); % null id null choice
+                    bi = ei + 1; ei = ei + sum(conditions(26,:));
+                    CT(2,1,1) =  mean(zsc(bi:ei)); % null id pref choice
+                    
+                    if (sum(isnan(CT(:)))>0)
+                        debug = 1;
+                    end
+                    
+                    ContignGTables{iN} = CT;
+                    
+                    end
+                    
+                    
                 else % TWO <- GrandCP and more ----------------------------------------------------------------------------------------------------------------------------------
                     
                     % next to zero z scored
@@ -739,7 +783,7 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                         debug = 1;
                     end
                     
-                    %% Contingency Tables
+                    %% TWO Contingency Tables
                     CT = zeros(2,2,2); % 3rd two, one for zscored rates and one for trial counts
                     CT(1,1,2) =  sum(conditions(24,:)); % pref bd pref choice
                     CT(1,2,2) =  sum(conditions(25,:)); % pref bd null choice
@@ -1357,7 +1401,7 @@ resamplesSpace = [[]];
 resampled_Bs = [];
 resampled_Ts = [];
 totaltrialscount = sum(trialcountstable(:));
-for ri = 1:1000 % resampling
+for ri = 1:10000 % resampling
     disp(ri);
     
     samples = [];
@@ -1449,6 +1493,8 @@ end
 figure(3683),clf, hold on,
 hist(resampled_Bs, 100);
 hist(resampled_Ts, 100, 'r');
+reflinexy(myB, 1000,'color','r');
+reflinexy(myT, 1000,'color','m');
 
 figure(4876), clf, hold on,
 hist(resampled_Ps_Len, 30, '.r')
