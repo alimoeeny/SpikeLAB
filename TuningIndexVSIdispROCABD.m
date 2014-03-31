@@ -4,6 +4,9 @@
 
 clear;
 clc
+
+cd /b/ali/matlab/SpikeLAB/dev
+
 try
     cd dev
 catch tempE
@@ -19,6 +22,7 @@ ShowSingleCellSDFs = 0; % 0 or 1
 % FinishTime = 10000;
 
 doitsquare = 0;
+ReSamplingBinsCT = {};
 
 % ABD
 % load /Users/ali/DropBox/Projects/BCode/AllABDNeurons.mat
@@ -121,6 +125,12 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     filename = MakeFileName(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType);
     filepath = MakeFilePath(MonkeyName, NeuronNumber, ClusterName, StimulusType, FileType, DataPath);
     %    filename = strcat(MonkeyAb(MonkeyName), num2str(NeuronNumber, '%-04.3d'), ClusterName, StimulusType,'.', FileType,'.mat');
+    if ~exist(filepath, 'file')
+        debug =1;
+        nstr = num2str(NeuronNumber, '%-04.3d');
+        shellcommand = ['ln -s /b/data/icarus/',nstr,'/ic',nstr,'.0.',ClusterName,'.cylinder.DID.mat /b/data/icarus/',nstr,'/ic',nstr,'.',ClusterName,'.cylinder.DID.mat'];
+        system(shellcommand)
+    end
     Neuron = load(filepath);
     Expt = Neuron.Expt;
     fileNames{iN} = filename;
@@ -160,6 +170,9 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
     end
     if (rdsPrefDirFailed || (length(rdsPrefDir)>1))
         rdsPrefDir = Expt.Stimvals.or;
+        if isempty(rdsPrefDir)
+            rdsPrefDir = median([Expt.Trials.or]);
+        end
     end
     prdsDir(iN) = rdsPrefDir;
     
@@ -272,6 +285,7 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     conditions(18,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
                     conditions(19,:)= [Expt.Trials(:).dx] == min([Expt.Trials([Expt.Trials(:).dx]>0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
                     
+                    %these are very suspicious, why ~= ? what I was thinking
                     conditions(20,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
                     conditions(21,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
                     conditions(22,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
@@ -310,6 +324,7 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     conditions(18,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToPositive;
                     conditions(19,:)= [Expt.Trials(:).dx] == max([Expt.Trials([Expt.Trials(:).dx]<0).dx]) & [Expt.Trials(:).RespDir]==ResponseToNegative;
                     
+                    %these are very suspicious, why ~= ? what I was thinking
                     conditions(20,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToPositive;
                     conditions(21,:)= [Expt.Trials(:).bd]>0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
                     conditions(22,:)= [Expt.Trials(:).bd]<0 & [Expt.Trials(:).dx]==0 & [Expt.Trials(:).RespDir]~=ResponseToNegative;
@@ -626,6 +641,41 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     if(GrandCP(iN)<0)
                         debug = 1;
                     end
+                    
+                    %% DID Contingency Tables
+                    if(strcmpi(FileType, 'DID'))
+                    CT = zeros(2,2,2); % 3rd two, one for zscored rates and one for trial counts
+                    CT(1,1,2) =  sum(conditions(24,:)); % pref id pref choice
+                    CT(1,2,2) =  sum(conditions(25,:)); % pref id null choice
+                    CT(2,2,2) =  sum(conditions(27,:)); % null id null choice
+                    CT(2,1,2) =  sum(conditions(26,:)); % null id pref choice
+                    
+                    
+                    zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
+                    conds = [1 * ones(1,sum(conditions(24,:))),2 * ones(1,sum(conditions(25,:))),3 * ones(1,sum(conditions(27,:))),4 * ones(1,sum(conditions(26,:)))];
+                    ReSamplingBinsCT{iN} = [conds; zsc'];                    
+                    % WRONG
+                    %conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
+                    %ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
+                    
+                    bi = 1; ei = sum(conditions(24,:));
+                    CT(1,1,1) =  mean(zsc(bi:ei));  % pref id pref choice
+                    bi = ei + 1; ei = ei + sum(conditions(25,:));
+                    CT(1,2,1) =  mean(zsc(bi:ei));  % pref id null choice
+                    bi = ei + 1; ei = ei + sum(conditions(27,:));
+                    CT(2,2,1) =  mean(zsc(bi:ei)); % null id null choice
+                    bi = ei + 1; ei = ei + sum(conditions(26,:));
+                    CT(2,1,1) =  mean(zsc(bi:ei)); % null id pref choice
+                    
+                    if (sum(isnan(CT(:)))>0)
+                        debug = 1;
+                    end
+                    
+                    ContignGTables{iN} = CT;
+                    
+                    end
+                    
+                    
                 else % TWO <- GrandCP and more ----------------------------------------------------------------------------------------------------------------------------------
                     
                     % next to zero z scored
@@ -733,23 +783,33 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                         debug = 1;
                     end
                     
-                    %% Contingency Tables
+                    %% TWO Contingency Tables
                     CT = zeros(2,2,2); % 3rd two, one for zscored rates and one for trial counts
-                    CT(1,1,2) =  sum(conditions(20,:)); % pref bd pref choice
-                    CT(1,2,2) =  sum(conditions(21,:)); % pref bd null choice
-                    CT(2,2,2) =  sum(conditions(22,:)); % null bd null choice
-                    CT(2,1,2) =  sum(conditions(23,:)); % null bd pref choice
+                    CT(1,1,2) =  sum(conditions(24,:)); % pref bd pref choice
+                    CT(1,2,2) =  sum(conditions(25,:)); % pref bd null choice
+                    CT(2,2,2) =  sum(conditions(27,:)); % null bd null choice
+                    CT(2,1,2) =  sum(conditions(26,:)); % null bd pref choice
                     
                     
-                    zsc = zscore([SpikeCounts(conditions(20,:)); SpikeCounts(conditions(21,:));SpikeCounts(conditions(22,:));SpikeCounts(conditions(23,:))]);
-                    bi = 1; ei = sum(conditions(20,:));
+                    zsc = zscore([SpikeCounts(conditions(24,:)); SpikeCounts(conditions(25,:));SpikeCounts(conditions(27,:));SpikeCounts(conditions(26,:))]);
+                    conds = [1 * ones(1,sum(conditions(24,:))),2 * ones(1,sum(conditions(25,:))),3 * ones(1,sum(conditions(27,:))),4 * ones(1,sum(conditions(26,:)))];
+                    ReSamplingBinsCT{iN} = [conds; zsc'];                    
+                    % WRONG
+                    %conds = ( 1 * conditions(24,:)) + ( 2 * conditions(25,:)) + ( 3 * conditions(27,:)) +  ( 4 * conditions(26,:));
+                    %ReSamplingBinsCT{iN} = [conds(conds>0); zsc'];
+                    
+                    bi = 1; ei = sum(conditions(24,:));
                     CT(1,1,1) =  mean(zsc(bi:ei));  % pref bd pref choice
-                    bi = ei + 1; ei = ei + sum(conditions(21,:));
+                    bi = ei + 1; ei = ei + sum(conditions(25,:));
                     CT(1,2,1) =  mean(zsc(bi:ei));  % pref bd null choice
-                    bi = ei + 1; ei = ei + sum(conditions(22,:));
+                    bi = ei + 1; ei = ei + sum(conditions(27,:));
                     CT(2,2,1) =  mean(zsc(bi:ei)); % null bd null choice
-                    bi = ei + 1; ei = ei + sum(conditions(23,:));
+                    bi = ei + 1; ei = ei + sum(conditions(26,:));
                     CT(2,1,1) =  mean(zsc(bi:ei)); % null bd pref choice
+                    
+                    if (sum(isnan(CT(:)))>0)
+                        debug = 1;
+                    end
                     
                     ContignGTables{iN} = CT;
                     
@@ -779,6 +839,8 @@ for iN=[1:length(AllNeurons)] %[1:33 40:length(AllNeurons)],
                     GrandCPFlip(iN) = ROCAUC(aaF, bbF);
                     
                     %% CP only with Biased trials
+                    
+                    %somthing is very suspicious about conditions(20 through 23 make sure that is what you mean here
                     CPOnlyCorrectBiased(iN) = ROCAUC(SpikeCounts(conditions(20,:)), SpikeCounts(conditions(22,:)));
                     CPOnlyWrongBiased(iN) = ROCAUC(SpikeCounts(conditions(21,:)), SpikeCounts(conditions(23,:)));
                 end
@@ -1206,12 +1268,21 @@ switch(upper(FileType))
         
         
         figure(291), clf, clickscatter(IdBiasROC1(GrandCPFlip>0), GrandCPFlip(GrandCPFlip>0), 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
-        ylabel('Flip ROC');
+        ylabel('GrandCP for flip');
         xlabel('Main ROC');
         ylim([0.1 1.]);
         xlim([0.1 1.]);
         refline(0, 0.5);
         reflinexy(0.5, 1);
+        
+        figure(298), clf, clickscatter(FlipROC(GrandCPFlip>0), GrandCPFlip(GrandCPFlip>0), 1+(BiaEff>BiaEffFlip), 7, fileNames); %, DotSizes, reshape(([IdColor{:}]), 3,length(IdColor))', 'filled');
+        ylabel('GrandCP for flip');
+        xlabel('Flip ROC');
+        ylim([0.1 1.]);
+        xlim([0.1 1.]);
+        refline(0, 0.5);
+        reflinexy(0.5, 1);
+        
         
         
         figure(842), clf,
@@ -1257,6 +1328,179 @@ figure(110011), clf, hold on,
 bar(ax, bwhite + bblack, 'r');
 bar(ax, bblack, 'k');
 xlim([0 1]);
+
+
+%%
+trialcountstable = zeros(2,2);
+zscoredspikecountstable = zeros(2,2);
+cellcounter = 0;
+ReSamplingBinCT = [[]];
+for i = 1:length(ContignGTables)
+    if shart(i)
+         if (sum(isnan(ContignGTables{i}(:)))==0)
+            trialcountstable = trialcountstable + ContignGTables{i}(:,:,2);
+            zscoredspikecountstable = zscoredspikecountstable + ContignGTables{i}(:,:,1);
+            cellcounter = cellcounter + 1;
+            ReSamplingBinCT = [ReSamplingBinCT, ReSamplingBinsCT{i}];
+         end
+    end
+end
+zscoredspikecountstable = zscoredspikecountstable ./ cellcounter; 
+
+disp(['cells in this table: ', num2str(cellcounter)]);
+
+totaltrialscount = sum(trialcountstable(:));
+
+p = zscoredspikecountstable(1,1);
+q = zscoredspikecountstable(1,2);
+r = zscoredspikecountstable(2,1);
+s = zscoredspikecountstable(2,2);
+n = totaltrialscount / 4;
+m1 = abs(0.5 * ((trialcountstable(1,1) - n) + (n - trialcountstable(1,2))));
+m2 = abs(0.5 * ((trialcountstable(2,1) - n) + (n - trialcountstable(2,2))));
+
+alpha = ((r - q) / 2);
+beta = p -s ;
+
+%N = (((beta*n*n)+(beta*n*m2)+(beta*n*m1)+(beta*m1*m2)) /2);
+%N = N - (alpha*n*n) - (alpha*m1*m2);
+%D = (n*m1)+(n*m2)-(2*m1*m2);
+%t = N/D;
+
+N = (beta*n*n)+(beta*(m1+m2)*n)+(beta*m1*m2)-(2*alpha*n*n)+(2*alpha*m1*m2);
+D = 2 *((n*m1)+(n*m2)+(2*m1*m2));
+
+t = N/D;
+b = alpha - t;
+
+myB = b;
+myT = t;
+
+disp(['real t and b are : ', num2str(b), ' and ', num2str(t)]);
+
+
+%model
+%
+% ----------------------------------------------------------------------
+%       |  p choice                     | null choice                  |
+% ------|-------------------------------|------------------------------|
+% p bd  | ((b+t)(n-m1)+2tm1) / (n+m1)   |  -b-t                        |
+% ------|-------------------------------|------------------------------|
+% n bd  | b + t                         | ((-b-t)(n-m2)-2tm2) / (n+m2) |
+% ----------------------------------------------------------------------
+
+% b+t -> PN
+%PN = somesortofnormalizedorweightedzscoredspikecountstable(2,1);
+% -b-t -> NP
+%NP = somesortofnormalizedorweightedzscoredspikecountstable(1,2);
+%  ((b+t)(n-m1)+2tm1) / (n+m1)
+
+% resampling
+
+resamplesSpace = [[]];
+resampled_Bs = [];
+resampled_Ts = [];
+totaltrialscount = sum(trialcountstable(:));
+for ri = 1:10000 % resampling
+    disp(ri);
+    
+    samples = [];
+    for xi = 1:size(ReSamplingBinCT,2)
+        rx = randi(size(ReSamplingBinCT,2),1);
+        samples = [samples rx];
+    end
+    
+    %remove this, this is just a sanity check to run once,
+    %samples = randperm(size(ReSamplingBinCT,2));
+    
+    pqrs = ReSamplingBinCT(:,samples);
+    ps = pqrs(2,find(pqrs(1,:)==1));
+    qs = pqrs(2,find(pqrs(1,:)==2));
+    rs = pqrs(2,find(pqrs(1,:)==4));
+    ss = pqrs(2,find(pqrs(1,:)==3));
+    p = mean(ps);
+    q = mean(qs);
+    r = mean(rs);
+    s = mean(ss);
+    
+    n = (length(ps) + length(qs) + length(rs) + length(ss))./4;
+    m1 = abs(0.5 * ((length(ps) - n) + (n - length(qs))));
+    m2 = abs(0.5 * ((length(rs) - n) + (n - length(ss))));
+    
+    alpha = ((r - q) / 2);
+    beta = p -s ;
+
+    
+    N = (beta*n*n)+(beta*(m1+m2)*n)+(beta*m1*m2)-(2*alpha*n*n)+(2*alpha*m1*m2);
+    D = 2 *((n*m1)+(n*m2)+(2*m1*m2));
+    t = N/D;
+    b = alpha - t;
+    resampled_Ps_Len(ri) = length(ps);
+    resampled_Qs_Len(ri) = length(qs);
+    resampled_Rs_Len(ri) = length(rs);
+    resampled_Ss_Len(ri) = length(ss);
+    resampled_Bs(ri) = b;
+    resampled_Ts(ri) = t;
+end
+
+%this is basically a sanity check
+resampled_Bs = sort(resampled_Bs);
+[m, n] = find(resampled_Bs>=myB);
+if (size(n,2)>0)
+    if myB>mean(resampled_Bs)
+        Bpp = 100 - (n(1) * 100 / length(resampled_Bs));
+    else
+        Bpp = (n(1) * 100 / length(resampled_Bs));
+    end
+end
+
+%this one is also basically a sanity check
+resampled_Ts = sort(resampled_Ts);
+[m, n] = find(resampled_Ts>=myT);
+if (size(n,2)>0)
+    if myT>mean(resampled_Ts)
+        Tpp = 100 - (n(1) * 100 / length(resampled_Ts));
+    else
+        Tpp = (n(1) * 100 / length(resampled_Ts));
+    end
+end
+
+
+% is myT different that Bs
+resampled_Bs = sort(resampled_Bs);
+[m, n] = find(resampled_Bs>=myT);
+if (size(n,2)>0)
+    if myT>mean(resampled_Bs)
+        Bpp = 100 - (n(1) * 100 / length(resampled_Bs));
+    else
+        Bpp = (n(1) * 100 / length(resampled_Bs));
+    end
+end
+
+% is myB different that Ts
+resampled_Ts = sort(resampled_Ts);
+[m, n] = find(resampled_Ts>=myB);
+if (size(n,2)>0)
+    if myB>mean(resampled_Ts)
+        Tpp = 100 - (n(1) * 100 / length(resampled_Ts));
+    else
+        Tpp = (n(1) * 100 / length(resampled_Ts));
+    end
+end
+
+
+
+figure(3683),clf, hold on,
+hist(resampled_Bs, 100);
+hist(resampled_Ts, 100, 'r');
+reflinexy(myB, 1000,'color','r');
+reflinexy(myT, 1000,'color','m');
+
+figure(4876), clf, hold on,
+hist(resampled_Ps_Len, 30, '.r')
+hist(resampled_Qs_Len, 30, '.r')
+hist(resampled_Rs_Len, 30, '.r')
+hist(resampled_Ss_Len, 30, '.r')
 
 
 
